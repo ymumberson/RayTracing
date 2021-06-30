@@ -147,7 +147,7 @@ public class Main extends Application {
         				
         				Vector r1 = snorm.multiply(2*snorm.dot(lnorm.multiply(1))).subtract(lnorm.multiply(1));
         				Vector e = new Vector(r.o().subtract(intersection)); e.normalise();
-        				Float n = 10f;
+        				Float n = 100f;
         				double cosTheta = r1.dot(e);
         				specular = (cosTheta > 0.0) ? Math.max(0.0, Math.pow((r1.dot(e)), n)) : 0;
         			}
