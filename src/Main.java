@@ -67,10 +67,15 @@ public class Main extends Application {
         tracableObjects.add(new Sphere(new Point((w/2), (h/3)*1.5f, 300), 100));
         
         //tracableObjects.get(0).setColor(Color.color(0.3, 0.2, 0.6));
-        tracableObjects.get(0).setColor(Color.BLUE);
-        tracableObjects.get(1).setColor(Color.color(1,1,0));
-        tracableObjects.get(2).setColor(Color.YELLOW);
-        tracableObjects.get(3).setColor(Color.RED);
+//        tracableObjects.get(0).setColor(Color.BLUE);
+//        tracableObjects.get(1).setColor(Color.color(1,1,0));
+//        tracableObjects.get(2).setColor(Color.YELLOW);
+//        tracableObjects.get(3).setColor(Color.RED);
+        
+        tracableObjects.get(0).setColor(Color.color(0.5,0.5,0),Color.color(1,1,0),Color.color(1,1,0));
+        tracableObjects.get(1).setColor(Color.color(0,0.67,0),Color.color(0,1,0),Color.color(1,0.3,0));
+        tracableObjects.get(2).setColor(Color.color(1,1,0),Color.color(1,1,0),Color.color(1,1,0));
+        tracableObjects.get(3).setColor(Color.color(0.4,0,0),Color.color(0.6,0,0),Color.color(0.5,0,0));
         
         Point intersection;
         Point light = new Point(lightX,0,0);
@@ -147,9 +152,12 @@ public class Main extends Application {
         				specular = (cosTheta > 0.0) ? Math.max(0.0, Math.pow((r1.dot(e)), n)) : 0;
         			}
         			
-        			double red = currentTracable.getRed()*ambient + currentTracable.getRed()*diffuse + currentTracable.getRed()*specular;
-        			double green = currentTracable.getGreen()*ambient + currentTracable.getGreen()*diffuse + currentTracable.getGreen()*specular;
-        			double blue = currentTracable.getBlue()*ambient + currentTracable.getBlue()*diffuse + currentTracable.getBlue()*specular;
+        			double red = currentTracable.getRedAmbient()*ambient 
+        					+ currentTracable.getRedDiffuse()*diffuse + currentTracable.getRedSpecular()*specular;
+        			double green = currentTracable.getGreenAmbient()*ambient 
+        					+ currentTracable.getGreenDiffuse()*diffuse + currentTracable.getGreenSpecular()*specular;
+        			double blue = currentTracable.getBlueAmbient()*ambient 
+        					+ currentTracable.getBlueDiffuse()*diffuse + currentTracable.getBlueSpecular()*specular;
         			if (green>1) {green=1;} if (green<0) {green=0;} 
         			if (blue>1) {blue=1;} if (blue<0) {blue=0;}
         			if (red>1) {red=1;} if (red<0) {red=0;}
