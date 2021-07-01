@@ -152,12 +152,17 @@ public class Main extends Application {
         				specular = (cosTheta > 0.0) ? Math.max(0.0, Math.pow((r1.dot(e)), n)) : 0;
         			}
         			
-        			double red = currentTracable.getRedAmbient()*ambient 
-        					+ currentTracable.getRedDiffuse()*diffuse + currentTracable.getRedSpecular()*specular;
-        			double green = currentTracable.getGreenAmbient()*ambient 
-        					+ currentTracable.getGreenDiffuse()*diffuse + currentTracable.getGreenSpecular()*specular;
-        			double blue = currentTracable.getBlueAmbient()*ambient 
-        					+ currentTracable.getBlueDiffuse()*diffuse + currentTracable.getBlueSpecular()*specular;
+        			Color traceAmb = currentTracable.getAmbient();
+        			Color traceDif = currentTracable.getDiffuse();
+        			Color traceSpec = currentTracable.getSpecular();
+        			
+        			double red = traceAmb.getRed()*ambient 
+        					+ traceDif.getRed()*diffuse + traceSpec.getRed()*specular;
+        			double green = traceAmb.getGreen()*ambient 
+        					+ traceDif.getGreen()*diffuse + traceSpec.getGreen()*specular;
+        			double blue = traceAmb.getBlue()*ambient 
+        					+ traceDif.getBlue()*diffuse + traceSpec.getBlue()*specular;
+        			
         			if (green>1) {green=1;} if (green<0) {green=0;} 
         			if (blue>1) {blue=1;} if (blue<0) {blue=0;}
         			if (red>1) {red=1;} if (red<0) {red=0;}

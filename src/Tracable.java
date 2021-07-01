@@ -1,15 +1,11 @@
 import javafx.scene.paint.Color;
 
 public abstract class Tracable {
-	protected double redAmbient;
-	protected double greenAmbient;
-	protected double blueAmbient;
-	protected double redDiffuse;
-	protected double greenDiffuse;
-	protected double blueDiffuse;
-	protected double redSpecular;
-	protected double greenSpecular;
-	protected double blueSpecular;
+	protected Color ambient;
+	protected Color diffuse;
+	protected Color specular;
+	
+	protected double reflectedAmount;
 	
 	/**
 	 * Finds the point at which the ray intersects the object
@@ -30,85 +26,65 @@ public abstract class Tracable {
 	public abstract Vector getNormal(Point p);
 	
 	public void setColor(Color col) {
-		redAmbient = col.getRed();
-		greenAmbient = col.getGreen();
-		blueAmbient = col.getBlue();
-		
-		redDiffuse = col.getRed();
-		greenDiffuse = col.getGreen();
-		blueDiffuse = col.getBlue();
-		
-		redSpecular = col.getRed();
-		greenSpecular = col.getGreen();
-		blueSpecular = col.getBlue();
+		ambient = diffuse = specular = col;
 	}
 	
 	public void setColor(Color ambient, Color diffuse, Color specular) {
-		redAmbient = ambient.getRed();
-		greenAmbient = ambient.getGreen();
-		blueAmbient = ambient.getBlue();
-		
-		redDiffuse = diffuse.getRed();
-		greenDiffuse = diffuse.getGreen();
-		blueDiffuse = diffuse.getBlue();
-		
-		redSpecular = specular.getRed();
-		greenSpecular = specular.getGreen();
-		blueSpecular = specular.getBlue();
+		this.ambient = ambient;
+		this.diffuse = diffuse;
+		this.specular = specular;
 	}
 	
-	public double getRed() {
-		return getRedAmbient();
+	public Color getColor() {
+		return getAmbient();
 	}
 	
-	public double getGreen() {
-		return getGreenAmbient();
+	public Color getColor(Point p) {
+		return getAmbient(p);
 	}
 	
-	public double getBlue() {
-		return getBlueAmbient();
+	public Color getAmbient() {
+		return ambient;
 	}
 	
-	public double getRedAmbient() {
-		return redAmbient;
+	public Color getAmbient(Point p) {
+		return ambient;
 	}
 	
-	public double getGreenAmbient() {
-		return greenAmbient;
+	public Color getDiffuse() {
+		return diffuse;
 	}
 	
-	public double getBlueAmbient() {
-		return blueAmbient;
+	public Color getDiffuse(Point p) {
+		return diffuse;
 	}
 	
-	public double getRedDiffuse() {
-		return redDiffuse;
+	public Color getSpecular() {
+		return specular;
 	}
 	
-	public double getGreenDiffuse() {
-		return greenDiffuse;
+	public Color getSpecular(Point p) {
+		return specular;
 	}
 	
-	public double getBlueDiffuse() {
-		return blueDiffuse;
+	public boolean isReflective() {
+		return getReflectedAmount() > 0;
 	}
 	
-	public double getRedSpecular() {
-		return redSpecular;
+	public void setReflectedAmount(double reflectedAmount) {
+		this.reflectedAmount = reflectedAmount;
 	}
 	
-	public double getGreenSpecular() {
-		return greenSpecular;
-	}
-	
-	public double getBlueSpecular() {
-		return blueSpecular;
+	public double getReflectedAmount() {
+		return reflectedAmount;
 	}
 	
 	public static void main(String[] args) {
-		Sphere s = new Sphere(new Point(0, 0, 100), 100);
-		System.out.println(s.getRed());
-		s.setColor(Color.BLUE);
-		System.out.println(s.getRed() + "," + s.getGreen() + "," + s.getBlue());
+//		Sphere s = new Sphere(new Point(0, 0, 100), 100);
+//		s.setColor(Color.BLUE);
+//		System.out.println(s.getColor().getRed() + "," + s.getColor().getGreen() + "," + s.getColor().getBlue());
+//		
+//		s.setColor(Color.color(0.2, 0.4, 0.5, 1));
+//		System.out.println(s.getColor().getRed() + "," + s.getColor().getGreen() + "," + s.getColor().getBlue());
 	}
 }
