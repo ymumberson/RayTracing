@@ -66,12 +66,18 @@ public class Main extends Application {
 				new Point(x_axis,floorHeight,z_axis+1000),
 				new Point(x_axis,floorHeight,0),
 				new Point(0,floorHeight,0)));
-        tracableObjects.add(new Sphere(new Point((w/2), (h/3)*1.5f, 300), 100));
+        //tracableObjects.add(new Sphere(new Point((w/2), (h/3)*1.5f, 300), 100));
+        tracableObjects.add(new Sphere(new Point((w/2), (h/3)*1f, 350), 120));
         
         tracableObjects.get(0).setColor(Color.color(0.5,0.5,0),Color.color(1,1,0),Color.color(1,1,0));
         tracableObjects.get(1).setColor(Color.color(0,0.67,0),Color.color(0,1,0),Color.color(1,0.3,0));
-        tracableObjects.get(2).setColor(Color.color(1,1,0),Color.color(1,1,0),Color.color(1,1,0));
-        tracableObjects.get(3).setColor(Color.color(0.4,0,0),Color.color(0.6,0,0),Color.color(0.5,0,0));
+        tracableObjects.get(2).setColor(Color.CADETBLUE,Color.CADETBLUE,Color.CADETBLUE);
+        //tracableObjects.get(3).setColor(Color.color(0.4,0,0),Color.color(0.6,0,0),Color.color(0.5,0,0));
+        tracableObjects.get(3).setColor(Color.color(1,1,1),Color.color(1,1,1),Color.color(1,1,1));
+        
+        tracableObjects.get(0).setReflectedAmount(0.2);
+        tracableObjects.get(1).setReflectedAmount(0.2);
+        tracableObjects.get(3).setReflectedAmount(0.5);
         
         light = new Point(lightX,0,0);
         camera = new Point(w/2.0f,h/2.0f,-1000f);
@@ -84,7 +90,7 @@ public class Main extends Application {
         		rayVec.normalise();
         		Ray r = new Ray(new Point(i,j,0), rayVec); //Persepective projection
 //        		Ray r = new Ray(new Point(i,j,0), new Vector(0,0,1)); //Authnographic projection
-        		image_writer.setColor(i, j, trace(r,1));
+        		image_writer.setColor(i, j, trace(r,4));
         	}
         }
 	}
@@ -125,7 +131,7 @@ public class Main extends Application {
     			if (o != currentTracable) {
     				Tracable temp = (Tracable) o;
     				if (temp.getIntersect(toLightR) >= 0) {
-    					//System.out.println("In shadow!");
+    					//System.out.println("In shadow!" + o);
     					inShadow = true;
     				}
     			}
@@ -157,6 +163,30 @@ public class Main extends Application {
 			double blue = traceAmb.getBlue()*ambient 
 					+ traceDif.getBlue()*diffuse + traceSpec.getBlue()*specular;
 			
+			// Calculating Reflections //
+			if (currentTracable.isReflective()) {
+				//System.out.println("There's a reflection!!!!");
+				double reflectiveAmount = currentTracable.getReflectedAmount();
+				double mattPercent = 1.0 - reflectiveAmount;
+				red *= mattPercent;
+				green *= mattPercent;
+				blue *= mattPercent;
+				
+				Vector n = currentTracable.getNormal(intersection);
+				Vector l = r.d();
+				Vector reflectedDir = l.subtract(n.multiply(2*l.dot(n)));
+				reflectedDir.normalise();
+				
+				//System.out.println(reflectedDir);
+				
+				Ray reflectedRay = new Ray(intersection, reflectedDir);
+				Color reflectionCol = trace(reflectedRay, recursiveDepth-1);
+				
+				red += reflectiveAmount * reflectionCol.getRed();
+				green += reflectiveAmount * reflectionCol.getGreen();
+				blue += reflectiveAmount * reflectionCol.getBlue();
+			}
+			
 			if (green>1) {green=1;} if (green<0) {green=0;} 
 			if (blue>1) {blue=1;} if (blue<0) {blue=0;}
 			if (red>1) {red=1;} if (red<0) {red=0;}
@@ -165,12 +195,11 @@ public class Main extends Application {
 		} else {
 			return Color.BLACK; //ie no intersections
 		}		
-
 	}
 	
 	/**
 	 * Old code
-	 * -> Just for testing
+	 * -> Just for testing / reference
 	 * @param img
 	 * @param lightX
 	 */
