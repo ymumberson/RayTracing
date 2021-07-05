@@ -89,7 +89,7 @@ public class Main extends Application {
         		Vector rayVec = new Vector(i-camera.x(), j-camera.y(), -camera.z());
         		rayVec.normalise();
         		Ray r = new Ray(new Point(i,j,0), rayVec); //Persepective projection
-//        		Ray r = new Ray(new Point(i,j,0), new Vector(0,0,1)); //Authnographic projection
+        		//Ray r = new Ray(new Point(i,j,0), new Vector(0,0,1)); //Authnographic projection
         		image_writer.setColor(i, j, trace(r,4));
         	}
         }

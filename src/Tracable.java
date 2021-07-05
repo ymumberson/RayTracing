@@ -6,6 +6,7 @@ public abstract class Tracable {
 	protected Color specular;
 	
 	protected double reflectedAmount;
+	protected double refractiveIndex;
 	
 	/**
 	 * Finds the point at which the ray intersects the object
@@ -77,6 +78,18 @@ public abstract class Tracable {
 	
 	public double getReflectedAmount() {
 		return reflectedAmount;
+	}
+	
+	public boolean isRefractive() {
+		return refractiveIndex > 1;
+	}
+	
+	public void setRefractiveIndex(double refractiveIndex) {
+		this.refractiveIndex = refractiveIndex;
+	}
+	
+	public double getRefractiveIndex() {
+		return refractiveIndex;
 	}
 	
 	public static void main(String[] args) {
