@@ -5,8 +5,9 @@ public abstract class Tracable {
 	protected Color diffuse;
 	protected Color specular;
 	
-	protected double reflectedAmount;
-	protected double refractiveIndex;
+	protected double reflectedPercent;
+	protected double refractedPercent;
+	protected double refractiveIndex = 1;
 	
 	/**
 	 * Finds the point at which the ray intersects the object
@@ -69,19 +70,27 @@ public abstract class Tracable {
 	}
 	
 	public boolean isReflective() {
-		return getReflectedAmount() > 0;
+		return getReflectedPercent() > 0;
 	}
 	
-	public void setReflectedAmount(double reflectedAmount) {
-		this.reflectedAmount = reflectedAmount;
+	public void setReflectedPercent(double reflectedPercent) {
+		this.reflectedPercent = reflectedPercent;
 	}
 	
-	public double getReflectedAmount() {
-		return reflectedAmount;
+	public double getReflectedPercent() {
+		return reflectedPercent;
 	}
 	
 	public boolean isRefractive() {
-		return refractiveIndex > 1;
+		return refractedPercent > 0;
+	}
+	
+	public double getRefractedPercent() {
+		return refractedPercent;
+	}
+	
+	public void setRefractedPercent(double refractedPercent) {
+		this.refractedPercent = refractedPercent;
 	}
 	
 	public void setRefractiveIndex(double refractiveIndex) {
@@ -90,6 +99,10 @@ public abstract class Tracable {
 	
 	public double getRefractiveIndex() {
 		return refractiveIndex;
+	}
+	
+	public double getMattPercent() {
+		return 1 - (refractedPercent + reflectedPercent);
 	}
 	
 	public static void main(String[] args) {

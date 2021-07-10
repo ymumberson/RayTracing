@@ -68,16 +68,21 @@ public class Main extends Application {
 				new Point(0,floorHeight,0)));
         //tracableObjects.add(new Sphere(new Point((w/2), (h/3)*1.5f, 300), 100));
         tracableObjects.add(new Sphere(new Point((w/2), (h/3)*1f, 350), 120));
+        tracableObjects.add(new Sphere(new Point((w/2), (h/2)*1.5f, 50), 50));
         
         tracableObjects.get(0).setColor(Color.color(0.5,0.5,0),Color.color(1,1,0),Color.color(1,1,0));
         tracableObjects.get(1).setColor(Color.color(0,0.67,0),Color.color(0,1,0),Color.color(1,0.3,0));
         tracableObjects.get(2).setColor(Color.CADETBLUE,Color.CADETBLUE,Color.CADETBLUE);
         //tracableObjects.get(3).setColor(Color.color(0.4,0,0),Color.color(0.6,0,0),Color.color(0.5,0,0));
         tracableObjects.get(3).setColor(Color.color(1,1,1),Color.color(1,1,1),Color.color(1,1,1));
+        tracableObjects.get(4).setColor(Color.color(1,1,1),Color.color(1,1,1),Color.color(1,1,1));
         
-        tracableObjects.get(0).setReflectedAmount(0.2);
-        tracableObjects.get(1).setReflectedAmount(0.2);
-        tracableObjects.get(3).setReflectedAmount(0.5);
+        tracableObjects.get(0).setReflectedPercent(0.2);
+        tracableObjects.get(1).setReflectedPercent(0.2);
+        tracableObjects.get(3).setReflectedPercent(0.5);
+        
+        tracableObjects.get(4).setRefractedPercent(1);
+        tracableObjects.get(4).setRefractiveIndex(1);
         
         light = new Point(lightX,0,0);
         camera = new Point(w/2.0f,h/2.0f,-1000f);
@@ -166,8 +171,8 @@ public class Main extends Application {
 			// Calculating Reflections //
 			if (currentTracable.isReflective()) {
 				//System.out.println("There's a reflection!!!!");
-				double reflectiveAmount = currentTracable.getReflectedAmount();
-				double mattPercent = 1.0 - reflectiveAmount;
+				double reflectiveAmount = currentTracable.getReflectedPercent();
+				double mattPercent = currentTracable.getMattPercent();
 				red *= mattPercent;
 				green *= mattPercent;
 				blue *= mattPercent;
@@ -185,6 +190,77 @@ public class Main extends Application {
 				red += reflectiveAmount * reflectionCol.getRed();
 				green += reflectiveAmount * reflectionCol.getGreen();
 				blue += reflectiveAmount * reflectionCol.getBlue();
+			}
+			
+			//Calculating refraction //
+			if (currentTracable.isRefractive()) {
+				Vector n = currentTracable.getNormal(intersection);
+				Vector i = r.d();
+				double nDotI = n.dot(i);
+				double cosi = Math.max(Math.min(1, nDotI),-1);
+				double etai = 1, etat = currentTracable.getRefractiveIndex();
+				
+				if (nDotI < 0) {
+					nDotI = -nDotI;
+				} else {
+					n = n.multiply(-1);
+					double temp = etai;
+					etai = etat;
+					etat = temp;
+				}
+				double eta = etai/etat;
+				double k = 1 - eta*eta*(1-cosi*cosi);
+				if (k < 0) {
+					System.out.println(0);
+				} else {
+					Vector out = n.multiply((eta * nDotI - Math.sqrt(k))).add(i.multiply(eta));
+					out.normalise();
+					Ray refractedRay = new Ray(intersection, out);
+					
+					
+					double tRefract = currentTracable.getIntersect(refractedRay);
+					if (tRefract > 0) {
+						//System.out.println("Ray exits the object! (3D)");
+						Point intersectionRefract = refractedRay.getPoint((float)tRefract);
+						n = currentTracable.getNormal(intersectionRefract);
+						i = out;
+						nDotI = n.dot(i);
+						cosi = Math.max(Math.min(1, nDotI),-1);
+						etai = 1;
+						etat = currentTracable.getRefractiveIndex();
+						
+						if (nDotI < 0) {
+							nDotI = -nDotI;
+						} else {
+							n = n.multiply(-1);
+							double temp = etai;
+							etai = etat;
+							etat = temp;
+						}
+						eta = etai/etat;
+						k = 1 - eta*eta*(1-cosi*cosi);
+						
+						if (k >= 0) {
+							Vector out2 = n.multiply((eta * nDotI - Math.sqrt(k))).add(i.multiply(eta));
+							out.normalise();
+							refractedRay = new Ray(intersection, out2);
+						}
+						
+					} else {
+						//System.out.println("Ray does not exit the object! (2D)");
+					}
+					System.out.println(refractedRay);
+					Color refractionColor = trace(refractedRay,recursiveDepth-1);
+					
+					double mattPerc = currentTracable.getMattPercent();
+					double refracPerc = currentTracable.getRefractedPercent();
+					
+					red = red*mattPerc + refracPerc*refractionColor.getRed();
+					green = green*mattPerc + refracPerc*refractionColor.getGreen();
+					blue = blue*mattPerc + refracPerc*refractionColor.getBlue();
+					
+					//System.out.println(out);
+				}
 			}
 			
 			if (green>1) {green=1;} if (green<0) {green=0;} 

@@ -52,4 +52,8 @@ public class Ray {
 	public Point o() {
 		return this.origin;
 	}
+	
+	public String toString() {
+		return "Origin: " + origin + ", Direction: " + direction;
+	}
 }
