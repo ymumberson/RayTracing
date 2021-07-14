@@ -20,6 +20,7 @@ public class Main extends Application {
 	private ArrayList<Tracable> tracableObjects = new ArrayList<Tracable>();
 	private Point light;
     private Point camera;
+    private AABB bb; //Bounding box surrounding the scene used as background (well it will be anyway)
 	
 	public static void main(String[] args) {
 		launch(args);
@@ -29,6 +30,11 @@ public class Main extends Application {
 	public void start(Stage primaryStage) throws Exception {
 		WritableImage img = new WritableImage(x_axis, y_axis);
 		ImageView imgView = new ImageView(img);
+		
+		Point min = new Point(-1,-1,-1);
+		Point max = new Point(x_axis+1, y_axis+1, z_axis+1);
+		bb = new AABB(min,max);
+		//System.out.println(bb);
 		
 		FlowPane root = new FlowPane();
 		root.setVgap(8);
@@ -59,6 +65,7 @@ public class Main extends Application {
 		int w=(int) img.getWidth(), h=(int) img.getHeight();
         PixelWriter image_writer = img.getPixelWriter();
         
+        //TODO tidy this up ffs -> Create objects and change attributes, then add object to the arraylist
         tracableObjects.add(new Sphere(new Point(w/4, h/2, 100), 100));
         tracableObjects.add(new Sphere(new Point((w/4)*3, h/2, 100), 100));
         int floorHeight = y_axis;
@@ -249,7 +256,7 @@ public class Main extends Application {
 					} else {
 						//System.out.println("Ray does not exit the object! (2D)");
 					}
-					System.out.println(refractedRay);
+					//System.out.println(refractedRay);
 					Color refractionColor = trace(refractedRay,recursiveDepth-1);
 					
 					double mattPerc = currentTracable.getMattPercent();
@@ -269,7 +276,15 @@ public class Main extends Application {
 			
 			return Color.color(red,green,blue,1.0);
 		} else {
-			return Color.BLACK; //ie no intersections
+			//return Color.BLACK; //ie no intersections
+			t = bb.getIntersect(r);
+			if (t >= 0) {
+				Point intersect = r.getPoint((float)t);
+				return bb.getColor(intersect);
+			} else {
+				System.out.println("uhhh I guess it missed the box?" + t);
+				return Color.BLACK;
+			}
 		}		
 	}
 	
