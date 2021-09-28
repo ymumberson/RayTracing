@@ -4,6 +4,7 @@ import javafx.application.Application;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.scene.Scene;
+import javafx.scene.control.Button;
 import javafx.scene.control.Slider;
 import javafx.scene.image.ImageView;
 import javafx.scene.image.PixelWriter;
@@ -21,6 +22,7 @@ public class Main extends Application {
 	private Point light;
     private Point camera;
     private AABB bb; //Bounding box surrounding the scene used as background (well it will be anyway)
+    private int MAX_RECURSIVE_DEPTH = 4;
 	
 	public static void main(String[] args) {
 		launch(args);
@@ -42,6 +44,7 @@ public class Main extends Application {
         
         VBox vb = new VBox();
         Slider lightSlider = new Slider(0,x_axis,0);
+        Button lightButton = new Button("Start");
         vb.getChildren().addAll(imgView,lightSlider);
         root.getChildren().addAll(vb);
         
@@ -54,42 +57,59 @@ public class Main extends Application {
     	        } 
     	    });
         
-        render(img,0);
+        lightButton.setOnMouseClicked(e -> {
+        	for (int i=0; i<= x_axis; i++) {
+        		render(img,i);
+        	}
+        });
+        
+        initialiseTracables();
+        render(img,10);
         
         Scene scene = new Scene(root, x_axis, y_axis+20);
         primaryStage.setScene(scene);
         primaryStage.show();
 	}
 	
+	public void initialiseTracables() {
+		int w = x_axis;
+		int h = y_axis;
+		
+		int floorHeight = y_axis;
+        Sphere s1 = new Sphere(new Point(w/4, h/2, 100), 100);
+        s1.setColor(Color.color(0.5,0.5,0),Color.color(1,1,0),Color.color(1,1,0));
+        s1.setReflectedPercent(0.2);
+        
+        Sphere s2 = new Sphere(new Point((w/4)*3, h/2, 100), 100);
+        s2.setColor(Color.color(0,0.67,0),Color.color(0,1,0),Color.color(1,0.3,0));
+        s2.setReflectedPercent(0.2);
+        
+        Rectangle floor = new Rectangle(new Point(0,floorHeight,z_axis+1000), 
+				new Point(x_axis,floorHeight,z_axis+1000),
+				new Point(x_axis,floorHeight,0),
+				new Point(0,floorHeight,0));
+        floor.setColor(Color.CADETBLUE,Color.CADETBLUE,Color.CADETBLUE);
+        
+        Sphere mirrorSphere = new Sphere(new Point((w/2), (h/3)*1f, 350), 120);
+        mirrorSphere.setColor(Color.color(1,1,1),Color.color(1,1,1),Color.color(1,1,1));
+        mirrorSphere.setReflectedPercent(0.5);
+        
+        Sphere refractiveSphere = new Sphere(new Point((w/2), (h/2)*1.5f, 50), 50);
+        refractiveSphere.setColor(Color.color(1,1,1),Color.color(1,1,1),Color.color(1,1,1));
+        refractiveSphere.setRefractedPercent(1);
+        refractiveSphere.setRefractiveIndex(1.5);
+        //System.out.println(refractiveSphere);
+        
+        tracableObjects.add(s1);
+        tracableObjects.add(s2);
+        tracableObjects.add(floor);
+        tracableObjects.add(mirrorSphere);
+        tracableObjects.add(refractiveSphere);
+	}
+	
 	public void render(WritableImage img, int lightX) {
 		int w=(int) img.getWidth(), h=(int) img.getHeight();
         PixelWriter image_writer = img.getPixelWriter();
-        
-        //TODO tidy this up ffs -> Create objects and change attributes, then add object to the arraylist
-        tracableObjects.add(new Sphere(new Point(w/4, h/2, 100), 100));
-        tracableObjects.add(new Sphere(new Point((w/4)*3, h/2, 100), 100));
-        int floorHeight = y_axis;
-        tracableObjects.add(new Rectangle(new Point(0,floorHeight,z_axis+1000), 
-				new Point(x_axis,floorHeight,z_axis+1000),
-				new Point(x_axis,floorHeight,0),
-				new Point(0,floorHeight,0)));
-        //tracableObjects.add(new Sphere(new Point((w/2), (h/3)*1.5f, 300), 100));
-        tracableObjects.add(new Sphere(new Point((w/2), (h/3)*1f, 350), 120));
-        tracableObjects.add(new Sphere(new Point((w/2), (h/2)*1.5f, 50), 50));
-        
-        tracableObjects.get(0).setColor(Color.color(0.5,0.5,0),Color.color(1,1,0),Color.color(1,1,0));
-        tracableObjects.get(1).setColor(Color.color(0,0.67,0),Color.color(0,1,0),Color.color(1,0.3,0));
-        tracableObjects.get(2).setColor(Color.CADETBLUE,Color.CADETBLUE,Color.CADETBLUE);
-        //tracableObjects.get(3).setColor(Color.color(0.4,0,0),Color.color(0.6,0,0),Color.color(0.5,0,0));
-        tracableObjects.get(3).setColor(Color.color(1,1,1),Color.color(1,1,1),Color.color(1,1,1));
-        tracableObjects.get(4).setColor(Color.color(1,1,1),Color.color(1,1,1),Color.color(1,1,1));
-        
-        tracableObjects.get(0).setReflectedPercent(0.2);
-        tracableObjects.get(1).setReflectedPercent(0.2);
-        tracableObjects.get(3).setReflectedPercent(0.5);
-        
-        tracableObjects.get(4).setRefractedPercent(1);
-        tracableObjects.get(4).setRefractiveIndex(1);
         
         light = new Point(lightX,0,0);
         camera = new Point(w/2.0f,h/2.0f,-1000f);
@@ -102,13 +122,16 @@ public class Main extends Application {
         		rayVec.normalise();
         		Ray r = new Ray(new Point(i,j,0), rayVec); //Persepective projection
         		//Ray r = new Ray(new Point(i,j,0), new Vector(0,0,1)); //Authnographic projection
-        		image_writer.setColor(i, j, trace(r,4));
+        		image_writer.setColor(i, j, trace(r,MAX_RECURSIVE_DEPTH));
         	}
         }
 	}
 	
 	public Color trace(Ray r, int recursiveDepth) {
-		if (recursiveDepth < 0) {return Color.BLUE;} //Default colour for reaching max recursive depth
+		if (recursiveDepth < 0) {
+			//System.out.println("Recursive depth cut-off reached"); 
+			return Color.BLUE;
+		} //Default colour for reaching max recursive depth
 		
 		Point intersection;
 		double ambient = 0.3;
@@ -120,7 +143,7 @@ public class Main extends Application {
 		double t = -1;
 		for (Object o: tracableObjects) {
 			Tracable temp = (Tracable) o;
-			double tempT = temp.getIntersect(r);
+			double tempT = temp.getIntersect(r)[0];
 //			if (tempT > t && !Double.isNaN(tempT) && !Double.isInfinite(tempT)) {
 			if ((t < 0 && tempT > t) || (t >= 0 && tempT < t && tempT >= 0)) {
 				//System.out.println("replacing t:" + t + " with tempT:" + tempT);
@@ -132,6 +155,7 @@ public class Main extends Application {
 		// Ray tracing //
 		if (t >= 0) {//Accounting for if rays intersect no objects
 			intersection = r.getPoint((float)t);
+			if (intersection.equals(r.o())) intersection = r.getPoint((float)(t+1));
 			double diffuse = 0;
 			double specular = 0;
 			Vector toLightV = new Vector(light.x()-intersection.x(),light.y()-intersection.y(),light.z()-intersection.z());
@@ -142,7 +166,7 @@ public class Main extends Application {
 			for (Object o: tracableObjects) {
     			if (o != currentTracable) {
     				Tracable temp = (Tracable) o;
-    				if (temp.getIntersect(toLightR) >= 0) {
+    				if (temp.getIntersect(toLightR)[0] >= 0) {
     					//System.out.println("In shadow!" + o);
     					inShadow = true;
     				}
@@ -189,7 +213,7 @@ public class Main extends Application {
 				Vector reflectedDir = l.subtract(n.multiply(2*l.dot(n)));
 				reflectedDir.normalise();
 				
-				//System.out.println(reflectedDir);
+				//System.out.println(recursiveDepth-1);
 				
 				Ray reflectedRay = new Ray(intersection, reflectedDir);
 				Color reflectionCol = trace(reflectedRay, recursiveDepth-1);
@@ -200,6 +224,30 @@ public class Main extends Application {
 			}
 			
 			//Calculating refraction //
+//			if (currentTracable.isRefractive()) {
+//				Vector n = currentTracable.getNormal(intersection);
+//				Vector i = r.d();
+//				double c1 = n.dot(i);
+//				if (c1 < 0) c1 = -c1;
+//				double snell = 1/currentTracable.getRefractiveIndex();
+//				double c2 = Math.sqrt(1-(snell*snell)*((1-c1*c1)*(1-c1*c1)));
+//				System.out.println(c2);
+//				Vector out = i.multiply(snell).add(n.multiply(snell*c1-c2));
+//				out.normalise();
+//				Ray refractedRay = new Ray(intersection, out);
+//				//System.out.println(refractedRay);
+//				
+//				Color refractionColor = trace(refractedRay,recursiveDepth-1);
+//				
+//				double mattPerc = currentTracable.getMattPercent();
+//				double refracPerc = currentTracable.getRefractedPercent();
+//				
+//				red = red*mattPerc + refracPerc*refractionColor.getRed();
+//				green = green*mattPerc + refracPerc*refractionColor.getGreen();
+//				blue = blue*mattPerc + refracPerc*refractionColor.getBlue();
+//			}
+			
+			//Refraction v1
 			if (currentTracable.isRefractive()) {
 				Vector n = currentTracable.getNormal(intersection);
 				Vector i = r.d();
@@ -207,8 +255,8 @@ public class Main extends Application {
 				double cosi = Math.max(Math.min(1, nDotI),-1);
 				double etai = 1, etat = currentTracable.getRefractiveIndex();
 				
-				if (nDotI < 0) {
-					nDotI = -nDotI;
+				if (cosi < 0) {
+					cosi = -cosi;
 				} else {
 					n = n.multiply(-1);
 					double temp = etai;
@@ -217,46 +265,57 @@ public class Main extends Application {
 				}
 				double eta = etai/etat;
 				double k = 1 - eta*eta*(1-cosi*cosi);
+				
+				//if (recursiveDepth == 0) System.out.println(k);
+				
 				if (k < 0) {
-					System.out.println(0);
+					System.out.println("Total internal refraction");
 				} else {
-					Vector out = n.multiply((eta * nDotI - Math.sqrt(k))).add(i.multiply(eta));
+					Vector out = n.multiply((eta * cosi - Math.sqrt(k))).add(i.multiply(eta));
 					out.normalise();
 					Ray refractedRay = new Ray(intersection, out);
 					
 					
-					double tRefract = currentTracable.getIntersect(refractedRay);
-					if (tRefract > 0) {
-						//System.out.println("Ray exits the object! (3D)");
-						Point intersectionRefract = refractedRay.getPoint((float)tRefract);
-						n = currentTracable.getNormal(intersectionRefract);
-						i = out;
-						nDotI = n.dot(i);
-						cosi = Math.max(Math.min(1, nDotI),-1);
-						etai = 1;
-						etat = currentTracable.getRefractiveIndex();
-						
-						if (nDotI < 0) {
-							nDotI = -nDotI;
-						} else {
-							n = n.multiply(-1);
-							double temp = etai;
-							etai = etat;
-							etat = temp;
-						}
-						eta = etai/etat;
-						k = 1 - eta*eta*(1-cosi*cosi);
-						
-						if (k >= 0) {
-							Vector out2 = n.multiply((eta * nDotI - Math.sqrt(k))).add(i.multiply(eta));
-							out.normalise();
-							refractedRay = new Ray(intersection, out2);
-						}
-						
-					} else {
-						//System.out.println("Ray does not exit the object! (2D)");
-					}
-					//System.out.println(refractedRay);
+//					double[] tRefractArr = currentTracable.getIntersect(refractedRay);
+//					double tRefract = (tRefractArr[0] < 0 && tRefractArr.length > 1 &&
+//							!Double.isInfinite(tRefractArr[1]) && tRefractArr[1] >= tRefractArr[0]) ? tRefractArr[1] : tRefractArr[0];
+//					if (tRefract >= 0) {
+//						//System.out.println("Ray exits the object! (3D)\n-> " + tRefractArr[0] + " " + tRefractArr[1]);
+//						//System.out.println("Ray exits the object! (3D)\n-> " + refractedRay);
+//						Point intersectionRefract = refractedRay.getPoint((float)tRefract);
+//						n = currentTracable.getNormal(intersectionRefract);
+//						i = out;
+//						nDotI = n.dot(i);
+//						cosi = Math.max(Math.min(1, nDotI),-1);
+//						etai = 1;
+//						etat = currentTracable.getRefractiveIndex();
+//						
+//						if (cosi < 0) {
+//							cosi = -cosi;
+//						} else {
+//							n = n.multiply(-1);
+//							double temp = etai;
+//							etai = etat;
+//							etat = temp;
+//						}
+//						eta = etai/etat;
+//						k = 1 - eta*eta*(1-cosi*cosi);
+//						
+//						if (k >= 0) {
+//							Vector out2 = (n.multiply((eta * nDotI - Math.sqrt(k))).add(i.multiply(eta)));
+//							out.normalise();
+//							refractedRay = new Ray(intersectionRefract, out2);
+//						}
+//						
+//					} else {
+//						//System.out.println("Ray does not exit the object! (2D)\n-> " + tRefract);
+//						//System.out.println("Ray does not exit the object! (2D)\n-> " + tRefractArr[0] + " " + tRefractArr[1]);
+//						System.out.println("Ray does not exit the object! (2D)" + "t:" + tRefract + "\n-> " + refractedRay);
+//						//System.out.println("Ray does not exit the object! (2D)" + intersection);
+//					}
+					
+					//System.out.println(recursiveDepth-1);
+					//if (recursiveDepth < MAX_RECURSIVE_DEPTH*3/4) System.out.println(r);
 					Color refractionColor = trace(refractedRay,recursiveDepth-1);
 					
 					double mattPerc = currentTracable.getMattPercent();
@@ -265,10 +324,8 @@ public class Main extends Application {
 					red = red*mattPerc + refracPerc*refractionColor.getRed();
 					green = green*mattPerc + refracPerc*refractionColor.getGreen();
 					blue = blue*mattPerc + refracPerc*refractionColor.getBlue();
-					
-					//System.out.println(out);
 				}
-			}
+			} //End of refraction
 			
 			if (green>1) {green=1;} if (green<0) {green=0;} 
 			if (blue>1) {blue=1;} if (blue<0) {blue=0;}
@@ -277,8 +334,10 @@ public class Main extends Application {
 			return Color.color(red,green,blue,1.0);
 		} else {
 			//return Color.BLACK; //ie no intersections
-			t = bb.getIntersect(r);
+			double[] temp = bb.getIntersect(r);
+			t = (temp[0] < 0 && temp.length > 1 && temp[1] >= 0) ? temp[1] : temp[0];
 			if (t >= 0) {
+				//System.out.println("Hit the box " + t);
 				Point intersect = r.getPoint((float)t);
 				return bb.getColor(intersect);
 			} else {
@@ -330,14 +389,14 @@ public class Main extends Application {
         		double col = 0;
         		double ambient = 0.3;
         		if (s1.doesIntersect(r)) {
-        			intersection = r.getPoint((float)s1.getIntersect(r));
+        			intersection = r.getPoint((float)s1.getIntersect(r)[0]);
         			double diffuse = 0;
         			double specular = 0;
         			
         			Vector toLightV = new Vector(light.x()-intersection.x(),light.y()-intersection.y(),light.z()-intersection.z());
         			toLightV.normalise();
         			Ray toLightR = new Ray(intersection, toLightV);
-        			if (!s2.doesIntersect(toLightR) || s2.getIntersect(toLightR) < 0 ) {
+        			if (!s2.doesIntersect(toLightR) || s2.getIntersect(toLightR)[0] < 0 ) {
         				lnorm = new Vector(light.subtract(intersection));
         				lnorm.normalise();
         				snorm = new Vector(intersection.subtract(s1.c()));
@@ -366,14 +425,14 @@ public class Main extends Application {
         			//image_writer.setColor(i, j, Color.color(col,0,0,1.0));
         			image_writer.setColor(i, j, Color.color(red,green,blue,1.0));
         		} else if (s2.doesIntersect(r)) {
-        			intersection = r.getPoint((float)s2.getIntersect(r));
+        			intersection = r.getPoint((float)s2.getIntersect(r)[0]);
         			double diffuse = 0;
         			double specular = 0;
         			
         			Vector toLightV = new Vector(light.x()-intersection.x(),light.y()-intersection.y(),light.z()-intersection.z());
         			toLightV.normalise();
         			Ray toLightR = new Ray(intersection, toLightV);
-        			if (!s1.doesIntersect(toLightR) || s1.getIntersect(toLightR) < 0 ) {
+        			if (!s1.doesIntersect(toLightR) || s1.getIntersect(toLightR)[0] < 0 ) {
         				lnorm = new Vector(light.subtract(intersection));
         				lnorm.normalise();
         				snorm = new Vector(intersection.subtract(s2.c()));

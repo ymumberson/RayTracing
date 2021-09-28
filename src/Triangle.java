@@ -56,7 +56,7 @@ public class Triangle extends Tracable {
 //	}
 	
 	@Override
-	public double getIntersect(Ray r) {
+	public double[] getIntersect(Ray r) {
 		Vector v0v1 = new Vector(p1.subtract(p0));
 		Vector v0v2 = new Vector(p2.subtract(p0));
 		//Vector triangleNorm = v0v1.cross(v0v2);
@@ -65,7 +65,7 @@ public class Triangle extends Tracable {
 		double nDotRayDir = triangleNorm.dot(r.d());
 		if (Math.abs(nDotRayDir) == 0) {
 			//System.out.println("Fail: Normals are parallel->" + r.d() + triangleNorm);
-			return -1;}
+			return new double[] {-1};}
 //		if (Math.abs(nDotRayDir) < EPSILON) {
 //			//System.out.println("Fail: Normals are parallel");
 //			return -1;}
@@ -82,7 +82,7 @@ public class Triangle extends Tracable {
 				
 //				+ "\n" + (triangleNorm.dot(new Vector(r.o())) + triangleNorm.dot(new Vector(p0)))
 //				+ "\n" + triangleNorm.dot(r.d()));
-				return t;}
+			return new double[] {t};}
 		
 		//Step 2) Inside-out test
 		Vector c;
@@ -110,7 +110,7 @@ public class Triangle extends Tracable {
 		c = vp0.cross(edge0);
 		if (triangleNorm.dot(c) < 0) {
 			//System.out.println("Fail: v0->v1 " + "c:" + c + "tn:" + triangleNorm + "r:" + r.o());
-			return -1;
+			return new double[] {-1};
 		}
 		
 		Vector edge1 = new Vector(p2.subtract(p1));
@@ -119,7 +119,7 @@ public class Triangle extends Tracable {
 		c = vp1.cross(edge1);
 		if (triangleNorm.dot(c) < 0) {
 			//System.out.println("Fail: v1->v2 " + "c:" + c + "tn:" + triangleNorm + "r:" + r.o());
-			return -1;
+			return new double[] {-1};
 		}
 		
 		Vector edge2 = new Vector(p0.subtract(p2));
@@ -128,10 +128,10 @@ public class Triangle extends Tracable {
 		c = vp2.cross(edge2);
 		if (triangleNorm.dot(c) < 0) {
 			//System.out.println("Fail: v2->v0 " + "c:" + c + "tn:" + triangleNorm + "r:" + r.o());
-			return -1;
+			return new double[] {-1};
 		}
 		
-		return t;
+		return new double[] {t};
 	}
 	
 	public Vector getNormal() {

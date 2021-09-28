@@ -115,6 +115,10 @@ public class Point {
 		return new Point(x/n,y/n,z/n);
 	}
 	
+	public boolean equals(Point p) {
+		return x==p.x() && y==p.y() && z==p.z();
+	}
+	
 	/**
 	 * Converts Point object to a string for readable output
 	 */

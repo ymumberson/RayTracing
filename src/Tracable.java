@@ -14,7 +14,7 @@ public abstract class Tracable {
 	 * @param r
 	 * @return
 	 */
-	public abstract double getIntersect(Ray r);
+	public abstract double[] getIntersect(Ray r);
 	
 	 /**
 	  * Returns true if the ray intersects the object
@@ -22,7 +22,7 @@ public abstract class Tracable {
 	  * @return
 	  */
 	public boolean doesIntersect(Ray r) {
-		return (this.getIntersect(r) >= 0);
+		return (this.getIntersect(r)[0] >= 0);
 	}
 	
 	public abstract Vector getNormal(Point p);

@@ -36,11 +36,18 @@ public class Rectangle extends Tracable{
 	}
 	
 	@Override
-	public double getIntersect(Ray r) {
+	public double[] getIntersect(Ray r) {
 		if (VALID_RECT) {
-			return Math.max(t1.getIntersect(r), t2.getIntersect(r));
+			double[] intersect1 = t1.getIntersect(r);
+			double[] intersect2 = t2.getIntersect(r);
+			if (intersect1[0] > intersect2[0]) {
+				return intersect1;
+			} else {
+				return intersect2;
+			}
+			//return Math.max(t1.getIntersect(r), t2.getIntersect(r));
 		} else {
-			return -1; //ie false
+			return new double[] {-1}; //ie false
 		}
 	}
 	
