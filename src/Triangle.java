@@ -160,4 +160,8 @@ public class Triangle extends Tracable {
 	public String toString() {
 		return "Triangle: " + p0 + " " + p1 + " " + p2;
 	}
+	
+	public Point[] getLastTwoPoint() {
+		return new Point[] {p1,p2};
+	}
 }

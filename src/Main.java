@@ -1,4 +1,5 @@
 import java.util.ArrayList;
+import java.util.Scanner;
 
 import javafx.application.Application;
 import javafx.beans.value.ChangeListener;
@@ -13,6 +14,9 @@ import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
+
+import java.io.File;
+import java.io.FileNotFoundException;
 
 public class Main extends Application {
 	private int x_axis = 640;
@@ -63,15 +67,92 @@ public class Main extends Application {
         	}
         });
         
-        initialiseTracables();
-        render(img,10);
+        //traceSampleScene(img,5);
+        traceBunny(img, 5);
         
         Scene scene = new Scene(root, x_axis, y_axis+20);
         primaryStage.setScene(scene);
         primaryStage.show();
 	}
 	
-	public void initialiseTracables() {
+	public void traceBunny(WritableImage img, int recursiveCutoff) {
+		initialiseBunnyTracables();
+		render(img,0);
+	}
+	
+	public void initialiseBunnyTracables() {
+		File f = new File("BunnyTest.ply");
+		Scanner in;
+		try {
+			in = new Scanner(f);
+			
+			//Skip 17 lines
+			for (int i=0; i<17; i++) {
+				in.nextLine();
+			}
+			int numVertex = Integer.valueOf(in.nextLine().split(" ")[2]);
+			//System.out.println(numVertex);
+			
+			//Skip 6 lines
+			for (int i=0; i<6; i++) {
+				in.nextLine();
+			}
+			
+			if (numVertex >= 3) {
+				String[] str = in.nextLine().split(" ");	
+				Point p1 = new Point(
+						Float.parseFloat(str[0]),
+						Float.parseFloat(str[1]),
+						Float.parseFloat(str[2]));
+				str = in.nextLine().split(" ");	
+				Point p2 = new Point(
+						Float.parseFloat(str[0]),
+						Float.parseFloat(str[1]),
+						Float.parseFloat(str[2]));
+				str = in.nextLine().split(" ");	
+				Point p3 = new Point(
+						Float.parseFloat(str[0]),
+						Float.parseFloat(str[1]),
+						Float.parseFloat(str[2]));
+				Triangle previousTriangle = new Triangle(p1,p2,p3);
+				tracableObjects.add(new Triangle(p1,p2,p3));
+				
+				for (int i=0; i<numVertex-3; i++) {
+					str = in.nextLine().split(" ");	
+					Point p = new Point(
+						Float.parseFloat(str[0]),
+						Float.parseFloat(str[1]),
+						Float.parseFloat(str[2]));
+					Point[] prevPoints = previousTriangle.getLastTwoPoint();
+					tracableObjects.add(new Triangle(prevPoints[0], prevPoints[1], p));
+					previousTriangle = new Triangle(prevPoints[0], prevPoints[1], p);
+					//System.out.println(p);
+				}
+				System.out.println("Triangles Added To Scene!");
+			}
+			
+			
+			
+//			for (int i=0; i<numVertex; i++) {
+//				String[] str = in.nextLine().split(" ");	
+//				Point p = new Point(
+//						Float.parseFloat(str[0]),
+//						Float.parseFloat(str[1]),
+//						Float.parseFloat(str[2]));
+//				System.out.println(p);
+//			}
+			
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	public void traceSampleScene(WritableImage img, int recursiveCutoff) {
+		initialiseSampleSceneTracables();
+        render(img,recursiveCutoff);
+	}
+	
+	public void initialiseSampleSceneTracables() {
 		int w = x_axis;
 		int h = y_axis;
 		
@@ -124,6 +205,7 @@ public class Main extends Application {
         		//Ray r = new Ray(new Point(i,j,0), new Vector(0,0,1)); //Authnographic projection
         		image_writer.setColor(i, j, trace(r,MAX_RECURSIVE_DEPTH));
         	}
+        	System.out.println("Row " + (j+1) + " completed!");
         }
 	}
 	
