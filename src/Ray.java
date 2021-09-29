@@ -30,10 +30,10 @@ public class Ray {
 	 * @param distance Distance from origin
 	 * @return Point along ray at given distance from origin
 	 */
-	public Point getPoint(float distance) {
-		float x = (float) (origin.x() + direction.dx()*distance);
-		float y = (float) (origin.y() + direction.dy()*distance);
-		float z = (float) (origin.z() + direction.dz()*distance);
+	public Point getPoint(double distance) {
+		double x = (origin.x() + direction.dx()*distance);
+		double y = (origin.y() + direction.dy()*distance);
+		double z = (origin.z() + direction.dz()*distance);
 		return new Point(x,y,z);
 	}
 	

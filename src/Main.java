@@ -67,8 +67,8 @@ public class Main extends Application {
         	}
         });
         
-        //traceSampleScene(img,5);
-        traceBunny(img, 5);
+        traceSampleScene(img,MAX_RECURSIVE_DEPTH);
+        //traceBunny(img, MAX_RECURSIVE_DEPTH);
         
         Scene scene = new Scene(root, x_axis, y_axis+20);
         primaryStage.setScene(scene);
@@ -98,33 +98,38 @@ public class Main extends Application {
 				in.nextLine();
 			}
 			
+			float scalar = 10000;
 			if (numVertex >= 3) {
 				String[] str = in.nextLine().split(" ");	
 				Point p1 = new Point(
-						Float.parseFloat(str[0]),
-						Float.parseFloat(str[1]),
-						Float.parseFloat(str[2]));
+						Float.parseFloat(str[0])*scalar,
+						Float.parseFloat(str[1])*scalar,
+						Float.parseFloat(str[2])*scalar);
 				str = in.nextLine().split(" ");	
 				Point p2 = new Point(
-						Float.parseFloat(str[0]),
-						Float.parseFloat(str[1]),
-						Float.parseFloat(str[2]));
+						Float.parseFloat(str[0])*scalar,
+						Float.parseFloat(str[1])*scalar,
+						Float.parseFloat(str[2])*scalar);
 				str = in.nextLine().split(" ");	
 				Point p3 = new Point(
-						Float.parseFloat(str[0]),
-						Float.parseFloat(str[1]),
-						Float.parseFloat(str[2]));
+						Float.parseFloat(str[0])*scalar,
+						Float.parseFloat(str[1])*scalar,
+						Float.parseFloat(str[2])*scalar);
 				Triangle previousTriangle = new Triangle(p1,p2,p3);
-				tracableObjects.add(new Triangle(p1,p2,p3));
+				Triangle temp1 = new Triangle(p1,p2,p3);
+				temp1.setColor(Color.RED);
+				tracableObjects.add(temp1);
 				
-				for (int i=0; i<numVertex-3; i++) {
+				for (int i=0; i<(numVertex)-3; i++) {
 					str = in.nextLine().split(" ");	
 					Point p = new Point(
-						Float.parseFloat(str[0]),
-						Float.parseFloat(str[1]),
-						Float.parseFloat(str[2]));
+						Float.parseFloat(str[0])*scalar,
+						Float.parseFloat(str[1])*scalar,
+						Float.parseFloat(str[2])*scalar);
 					Point[] prevPoints = previousTriangle.getLastTwoPoint();
-					tracableObjects.add(new Triangle(prevPoints[0], prevPoints[1], p));
+					Triangle t1 = new Triangle(prevPoints[0], prevPoints[1], p);
+					t1.setColor(Color.RED);
+					tracableObjects.add(t1);
 					previousTriangle = new Triangle(prevPoints[0], prevPoints[1], p);
 					//System.out.println(p);
 				}
@@ -205,7 +210,7 @@ public class Main extends Application {
         		//Ray r = new Ray(new Point(i,j,0), new Vector(0,0,1)); //Authnographic projection
         		image_writer.setColor(i, j, trace(r,MAX_RECURSIVE_DEPTH));
         	}
-        	System.out.println("Row " + (j+1) + " completed!");
+        	//System.out.println("Row " + (j+1) + "/" + h + " completed!");
         }
 	}
 	
@@ -236,8 +241,15 @@ public class Main extends Application {
 		
 		// Ray tracing //
 		if (t >= 0) {//Accounting for if rays intersect no objects
-			intersection = r.getPoint((float)t);
-			if (intersection.equals(r.o())) intersection = r.getPoint((float)(t+1));
+		//if ((recursiveDepth == MAX_RECURSIVE_DEPTH && t >= 0) || (recursiveDepth != MAX_RECURSIVE_DEPTH && t > 0)) {
+//			if (recursiveDepth != MAX_RECURSIVE_DEPTH && Math.abs(t) < 0.00001) {
+//				System.out.println(t);
+//				t = currentTracable.getIntersect(r)[1];
+//			}
+			intersection = r.getPoint(t);
+//			if (intersection.equals(r.o())) {
+//				intersection = r.getPoint((t+1)); System.out.println(String.valueOf(t));
+//			}
 			double diffuse = 0;
 			double specular = 0;
 			Vector toLightV = new Vector(light.x()-intersection.x(),light.y()-intersection.y(),light.z()-intersection.z());
@@ -355,8 +367,12 @@ public class Main extends Application {
 				} else {
 					Vector out = n.multiply((eta * cosi - Math.sqrt(k))).add(i.multiply(eta));
 					out.normalise();
-					Ray refractedRay = new Ray(intersection, out);
 					
+					Ray refractedRay = new Ray(intersection, out);
+					//if (intersection == r.o()) { //Accounts for rounding error, advances point forward if is same as current ray origin
+						Point p = intersection.add(new Point(r.d()));
+						refractedRay = new Ray(p, out);
+					//}
 					
 //					double[] tRefractArr = currentTracable.getIntersect(refractedRay);
 //					double tRefract = (tRefractArr[0] < 0 && tRefractArr.length > 1 &&

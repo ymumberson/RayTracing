@@ -125,20 +125,20 @@ public class AABB {
 		 * https://www.scratchapixel.com/lessons/3d-basic-rendering/minimal-ray-tracer-rendering-simple-shapes/ray-box-intersection
 		 */
 		//Default values for no intersection
-		float tmin = (min.x() - r.o().x()) / (float)r.d().dx();
-		float tmax = (max.x() - r.o().x()) / (float)r.d().dx();
+		double tmin = (min.x() - r.o().x()) / r.d().dx();
+		double tmax = (max.x() - r.o().x()) / r.d().dx();
 		
 		if (tmin > tmax) {
-			float temp = tmin;
+			double temp = tmin;
 			tmin = tmax;
 			tmax = temp;
 		}
 		
-		float tymin = (min.y() - r.o().y()) / (float)r.d().dy();
-		float tymax = (max.y() - r.o().y()) / (float)r.d().dy();
+		double tymin = (min.y() - r.o().y()) / r.d().dy();
+		double tymax = (max.y() - r.o().y()) / r.d().dy();
 		
 		if (tymin > tymax) {
-			float temp = tymin;
+			double temp = tymin;
 			tymin = tymax;
 			tymax = temp;
 		}
@@ -149,11 +149,11 @@ public class AABB {
 		
 		if (tymax < tmax) tmax = tymax;
 		
-		float tzmin = (min.z() - r.o().z()) / (float)r.d().dz();
-		float tzmax = (max.z() - r.o().z()) / (float)r.d().dz();
+		double tzmin = (min.z() - r.o().z()) / r.d().dz();
+		double tzmax = (max.z() - r.o().z()) / r.d().dz();
 		
 		if (tzmin > tzmax) {
-			float temp = tzmin;
+			double temp = tzmin;
 			tzmin = tzmax;
 			tzmax = temp;
 		}

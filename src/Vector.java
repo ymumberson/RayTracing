@@ -34,9 +34,9 @@ public class Vector {
 	}
 	
 	public Vector cross(Vector v) {
-		float cX = (float)(dy*v.dz - dz*v.dy);
-		float cY = (float)(dz*v.dx - dx*v.dz);
-		float cZ = (float)(dx*v.dy - dy*v.dx);
+		double cX = (dy*v.dz - dz*v.dy);
+		double cY = (dz*v.dx - dx*v.dz);
+		double cZ = (dx*v.dy - dy*v.dx);
 		return new Vector(new Point(cX,cY,cZ));
 	}
 	

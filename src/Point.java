@@ -7,17 +7,17 @@ public class Point {
 	/**
 	 * x coordinate of the point
 	 */
-	private float x;
+	private double x;
 	
 	/**
 	 * y coordinate of the point
 	 */
-	private float y;
+	private double y;
 	
 	/**
 	 * z coordinate of the point
 	 */
-	private float z;
+	private double z;
 	
 	/**
 	 * Constructor for Point
@@ -25,23 +25,23 @@ public class Point {
 	 * @param y Y-coordinate of the point
 	 * @param z Z-coordinate of the point
 	 */
-	public Point(float x, float y, float z) {
+	public Point(double x, double y, double z) {
 		this.x = x;
 		this.y = y;
 		this.z = z;
 	}
 	
 	public Point(Vector v) {
-		this.x = (float) v.dx();
-		this.y = (float) v.dy();
-		this.z = (float) v.dz();
+		this.x = v.dx();
+		this.y = v.dy();
+		this.z = v.dz();
 	}
 	
 	/**
 	 * Getter for x
 	 * @return
 	 */
-	public float x() {
+	public double x() {
 		return this.x;
 	}
 	
@@ -49,7 +49,7 @@ public class Point {
 	 * Getter for y
 	 * @return
 	 */
-	public float y() {
+	public double y() {
 		return this.y;
 	}
 	
@@ -57,7 +57,7 @@ public class Point {
 	 * Getter for z
 	 * @return
 	 */
-	public float z() {
+	public double z() {
 		return this.z;
 	}
 	
@@ -65,7 +65,7 @@ public class Point {
 	 * Setter for x
 	 * @param x
 	 */
-	public void setX(float x) {
+	public void setX(double x) {
 		this.x = x;
 	}
 	
@@ -73,7 +73,7 @@ public class Point {
 	 * Setter for y
 	 * @param y
 	 */
-	public void setY(float y) {
+	public void setY(double y) {
 		this.y = y;
 	}
 	
@@ -81,7 +81,7 @@ public class Point {
 	 * Setter for z
 	 * @param z
 	 */
-	public void setZ(float z) {
+	public void setZ(double z) {
 		this.z = z;
 	}
 	
