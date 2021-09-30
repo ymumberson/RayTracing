@@ -27,7 +27,7 @@ public class Main extends Application {
 	private Point light;
     private Point camera;
     private AABB bb; //Bounding box surrounding the scene used as background (well it will be anyway)
-    private int MAX_RECURSIVE_DEPTH = 8;
+    private int MAX_RECURSIVE_DEPTH = 1;
 	
 	public static void main(String[] args) {
 		launch(args);
