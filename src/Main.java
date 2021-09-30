@@ -19,10 +19,9 @@ import java.io.File;
 import java.io.FileNotFoundException;
 
 public class Main extends Application {
-	//Dimensions used to be 640,480,400
-	private int x_axis = 1920;
-	private int y_axis = 1080;
-	private int z_axis = 1000;
+	private int x_axis = 640; private int y_axis = 480; private int z_axis = 400;
+//	private int x_axis = 1920; private int y_axis = 1080; private int z_axis = 1000;
+	
 	private ArrayList<Tracable> tracableObjects = new ArrayList<Tracable>();
 	private Point light;
     private Point camera;
@@ -68,8 +67,8 @@ public class Main extends Application {
         	}
         });
         
-        traceSampleScene(img,MAX_RECURSIVE_DEPTH);
-        //traceBunny(img, MAX_RECURSIVE_DEPTH);
+        //traceSampleScene(img,MAX_RECURSIVE_DEPTH);
+        traceBunny(img, MAX_RECURSIVE_DEPTH);
         
         Scene scene = new Scene(root, x_axis, y_axis+20);
         primaryStage.setScene(scene);
@@ -82,75 +81,63 @@ public class Main extends Application {
 	}
 	
 	public void initialiseBunnyTracables() {
-		File f = new File("BunnyTest.ply");
+		//File f = new File("BunnyTest.ply");
+		File f = new File("bun_zipper_res4.ply");
 		Scanner in;
 		try {
 			in = new Scanner(f);
 			
 			//Skip 17 lines
-			for (int i=0; i<17; i++) {
+			int numLinesSkip = 3;
+			for (int i=0; i<numLinesSkip; i++) {
 				in.nextLine();
 			}
 			int numVertex = Integer.valueOf(in.nextLine().split(" ")[2]);
 			//System.out.println(numVertex);
 			
 			//Skip 6 lines
-			for (int i=0; i<6; i++) {
+			int numLinesSkip2 = 5;
+			for (int i=0; i<numLinesSkip2; i++) {
 				in.nextLine();
 			}
 			
-			float scalar = 10000;
-			if (numVertex >= 3) {
-				String[] str = in.nextLine().split(" ");	
-				Point p1 = new Point(
-						Float.parseFloat(str[0])*scalar,
-						Float.parseFloat(str[1])*scalar,
-						Float.parseFloat(str[2])*scalar);
-				str = in.nextLine().split(" ");	
-				Point p2 = new Point(
-						Float.parseFloat(str[0])*scalar,
-						Float.parseFloat(str[1])*scalar,
-						Float.parseFloat(str[2])*scalar);
-				str = in.nextLine().split(" ");	
-				Point p3 = new Point(
-						Float.parseFloat(str[0])*scalar,
-						Float.parseFloat(str[1])*scalar,
-						Float.parseFloat(str[2])*scalar);
-				Triangle previousTriangle = new Triangle(p1,p2,p3);
-				Triangle temp1 = new Triangle(p1,p2,p3);
-				temp1.setColor(Color.RED);
-				tracableObjects.add(temp1);
-				
-				for (int i=0; i<(numVertex)-3; i++) {
-					str = in.nextLine().split(" ");	
-					Point p = new Point(
-						Float.parseFloat(str[0])*scalar,
-						Float.parseFloat(str[1])*scalar,
-						Float.parseFloat(str[2])*scalar);
-					Point[] prevPoints = previousTriangle.getLastTwoPoint();
-					Triangle t1 = new Triangle(prevPoints[0], prevPoints[1], p);
-					t1.setColor(Color.RED);
-					tracableObjects.add(t1);
-					previousTriangle = new Triangle(prevPoints[0], prevPoints[1], p);
-					//System.out.println(p);
-				}
-				System.out.println("Triangles Added To Scene!");
+			int numTriangles = Integer.valueOf(in.nextLine().split(" ")[2]);
+			
+			int numLinesSkip3 = 2;
+			for (int i=0; i<numLinesSkip3; i++) {
+				in.nextLine();
 			}
 			
+			Point[] pointList = new Point[numVertex];
+			float scalar = 2000;
+			for (int i=0; i<(numVertex); i++) {
+				String[] str = in.nextLine().split(" ");	
+				pointList[i] = new Point(
+					Float.parseFloat(str[0])*scalar + x_axis/2,
+					Float.parseFloat(str[1])*scalar,
+					Float.parseFloat(str[2])*scalar);
+			}
+			System.out.println("Point List Created!");
 			
+			for (int i=0; i<numTriangles; i++) {
+				String[] str = in.nextLine().split(" ");
+				Triangle t = new Triangle(pointList[Integer.valueOf(str[1])],
+						pointList[Integer.valueOf(str[2])],
+						pointList[Integer.valueOf(str[3])]);
+				double red = Math.random();
+				double green = Math.random();
+				double blue = Math.random();
+				t.setColor(Color.color(red, green, blue));
+				//t.setColor(Color.RED);
+				tracableObjects.add(t);
+			}
+			System.out.println("Triangles Added To Scene!");
 			
-//			for (int i=0; i<numVertex; i++) {
-//				String[] str = in.nextLine().split(" ");	
-//				Point p = new Point(
-//						Float.parseFloat(str[0]),
-//						Float.parseFloat(str[1]),
-//						Float.parseFloat(str[2]));
-//				System.out.println(p);
-//			}
-			
+			in.close();
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 		}
+		
 	}
 	
 	public void traceSampleScene(WritableImage img, int recursiveCutoff) {
@@ -216,7 +203,7 @@ public class Main extends Application {
         		//Ray r = new Ray(new Point(i,j,0), new Vector(0,0,1)); //Authnographic projection
         		image_writer.setColor(i, j, trace(r,MAX_RECURSIVE_DEPTH));
         	}
-        	//System.out.println("Row " + (j+1) + "/" + h + " completed!");
+        	System.out.println("Row " + (j+1) + "/" + h + " completed!");
         }
 	}
 	

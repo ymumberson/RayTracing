@@ -76,6 +76,10 @@ public class Vector {
 		return dz;
 	}
 	
+	public Vector absolute() {
+		return new Vector(Math.abs(dx),Math.abs(dy),Math.abs(dz));
+	}
+	
 	public String toString() {
 		return "(" + this.dx + "," + this.dy + "," + this.dz + ")";
 	}

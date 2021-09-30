@@ -139,6 +139,7 @@ public class Triangle extends Tracable {
 		Vector v0v2 = new Vector(p2.subtract(p0));
 		Vector triangleNorm = v0v2.cross(v0v1);
 		return triangleNorm;
+		//return triangleNorm.absolute().multiply(-1);
 	}
 	
 	public Vector getNormal(Point p) {
