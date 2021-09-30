@@ -19,14 +19,15 @@ import java.io.File;
 import java.io.FileNotFoundException;
 
 public class Main extends Application {
-	private int x_axis = 640;
-	private int y_axis = 480;
-	private int z_axis = 400;
+	//Dimensions used to be 640,480,400
+	private int x_axis = 1920;
+	private int y_axis = 1080;
+	private int z_axis = 1000;
 	private ArrayList<Tracable> tracableObjects = new ArrayList<Tracable>();
 	private Point light;
     private Point camera;
     private AABB bb; //Bounding box surrounding the scene used as background (well it will be anyway)
-    private int MAX_RECURSIVE_DEPTH = 4;
+    private int MAX_RECURSIVE_DEPTH = 8;
 	
 	public static void main(String[] args) {
 		launch(args);
@@ -162,11 +163,15 @@ public class Main extends Application {
 		int h = y_axis;
 		
 		int floorHeight = y_axis;
-        Sphere s1 = new Sphere(new Point(w/4, h/2, 100), 100);
+		//Left Sphere
+        Sphere s1 = new Sphere(new Point(w/4, h/2, z_axis/3), 200);
         s1.setColor(Color.color(0.5,0.5,0),Color.color(1,1,0),Color.color(1,1,0));
-        s1.setReflectedPercent(0.2);
+        s1.setReflectedPercent(0.4);
         
-        Sphere s2 = new Sphere(new Point((w/4)*3, h/2, 100), 100);
+        //Right sphere
+        Sphere s2 = new Sphere(new Point((w/4)*3, h/2, z_axis/3), 200);
+        //int len = 150;
+        //Box s2 = new Box(new Point((w/4)*3-len, h/2-len, z_axis/3-len), new Point((w/4)*3+len, h/2+len, z_axis/3+len));
         s2.setColor(Color.color(0,0.67,0),Color.color(0,1,0),Color.color(1,0.3,0));
         s2.setReflectedPercent(0.2);
         
@@ -176,13 +181,14 @@ public class Main extends Application {
 				new Point(0,floorHeight,0));
         floor.setColor(Color.CADETBLUE,Color.CADETBLUE,Color.CADETBLUE);
         
-        Sphere mirrorSphere = new Sphere(new Point((w/2), (h/3)*1f, 350), 120);
+        Sphere mirrorSphere = new Sphere(new Point((w/2), (h/3)*1f, z_axis*3/4), 300);
         mirrorSphere.setColor(Color.color(1,1,1),Color.color(1,1,1),Color.color(1,1,1));
-        mirrorSphere.setReflectedPercent(0.5);
+        mirrorSphere.setReflectedPercent(0.9);
         
-        Sphere refractiveSphere = new Sphere(new Point((w/2), (h/2)*1.5f, 50), 50);
+        Sphere refractiveSphere = new Sphere(new Point((w/2), (h/2)*1.4f, 150), 150);
         refractiveSphere.setColor(Color.color(1,1,1),Color.color(1,1,1),Color.color(1,1,1));
-        refractiveSphere.setRefractedPercent(1);
+        refractiveSphere.setReflectedPercent(0.1);
+        refractiveSphere.setRefractedPercent(0.9);
         refractiveSphere.setRefractiveIndex(1.5);
         //System.out.println(refractiveSphere);
         

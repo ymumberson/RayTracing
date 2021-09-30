@@ -40,7 +40,7 @@ public class Rectangle extends Tracable{
 		if (VALID_RECT) {
 			double[] intersect1 = t1.getIntersect(r);
 			double[] intersect2 = t2.getIntersect(r);
-			if (intersect1[0] > intersect2[0]) {
+			if (intersect1[0] > intersect2[0]) { //Can't intersect them both so larger value is the one it intersected
 				return intersect1;
 			} else {
 				return intersect2;
