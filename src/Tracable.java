@@ -37,6 +37,18 @@ public abstract class Tracable {
 		this.specular = specular;
 	}
 	
+	public void setAmbient(Color ambient) {
+		this.ambient = ambient;
+	}
+	
+	public void setDiffuse(Color diffuse) {
+		this.diffuse = diffuse;
+	}
+	
+	public void setSpecular(Color specular) {
+		this.specular = specular;
+	}
+	
 	public Color getColor() {
 		return getAmbient();
 	}
@@ -104,6 +116,12 @@ public abstract class Tracable {
 	public double getMattPercent() {
 		return 1 - (refractedPercent + reflectedPercent);
 	}
+	
+	/**
+	 * Generates an Axis-Aligned Bounding Box surrounding the tracable object.
+	 * @return The AABB
+	 */
+	public abstract AABB generateAABB();
 	
 	public static void main(String[] args) {
 //		Sphere s = new Sphere(new Point(0, 0, 100), 100);

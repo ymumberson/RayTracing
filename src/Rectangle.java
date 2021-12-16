@@ -1,4 +1,3 @@
-
 public class Rectangle extends Tracable{
 	private final boolean VALID_RECT;
 	private Triangle t1,t2;
@@ -16,6 +15,18 @@ public class Rectangle extends Tracable{
 //		t2 = new Triangle(topLeft,v1,bottomRight);
 //		System.out.println(this);
 //	}
+	
+	public Rectangle(Triangle t1, Triangle t2) {
+		this.t1 = t1;
+		this.t2 = t2;
+		
+		if (t1.getNormal().equals(t2.getNormal())) {
+			VALID_RECT = true;
+		} else {
+			VALID_RECT = false;
+			System.out.println(this);
+		}
+	}
 	
 	public Rectangle(Point topLeft, Point topRight, Point bottomRight, Point bottomLeft) {
 		t1 = new Triangle(topLeft,bottomRight,bottomLeft);
@@ -68,5 +79,13 @@ public class Rectangle extends Tracable{
 		} else {
 			return "Invalid Rectangle. (Rectangle is not flat)";
 		}
+	}
+
+	@Override
+	public AABB generateAABB() {
+		Point[] ls = new Point[] {t1.getP0(),t1.getP1(),t1.getP2(),t2.getP0(),t2.getP1(),t2.getP2()};
+		Point min = Point.min(ls);
+		Point max = Point.min(ls);
+		return new AABB(min,max);
 	}
 }

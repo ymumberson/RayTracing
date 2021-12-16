@@ -52,6 +52,10 @@ public class Vector {
 		return new Vector(dx-v.dx, dy-v.dy, dz-v.dz);
 	}
 	
+	public Vector minus(Vector v) {
+		return subtract(v);
+	}
+	
 	public Vector add(Vector v) {
 		return new Vector(dx+v.dx, dy+v.dy, dz+v.dz);
 	}

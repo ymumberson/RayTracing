@@ -38,6 +38,49 @@ public class Point {
 	}
 	
 	/**
+	 * Returns a new point with the smallest (x,y,z) from the given point list.
+	 * @param ls
+	 * @return
+	 */
+	public static Point min(Point[] ls) {
+		if (ls != null) {
+			if (ls.length == 1) {
+				return ls[0];
+			} else {
+				double minx = ls[0].x();
+				double miny = ls[0].y();
+				double minz = ls[0].z();
+				for (int i=1; i<ls.length; i++) {
+					if (ls[i].x() < minx) {minx = ls[i].x();}
+					if (ls[i].y() < miny) {miny = ls[i].y();}
+					if (ls[i].z() < minz) {minz = ls[i].z();}
+				}
+				return new Point(minx,miny,minz);
+			}
+		}
+		return null;
+	}
+	
+	public static Point max(Point[] ls) {
+		if (ls != null) {
+			if (ls.length == 1) {
+				return ls[0];
+			} else {
+				double maxx = ls[0].x();
+				double maxy = ls[0].y();
+				double maxz = ls[0].z();
+				for (int i=1; i<ls.length; i++) {
+					if (ls[i].x() > maxx) {maxx = ls[i].x();}
+					if (ls[i].y() > maxy) {maxy = ls[i].y();}
+					if (ls[i].z() > maxz) {maxz = ls[i].z();}
+				}
+				return new Point(maxx,maxy,maxz);
+			}
+		}
+		return null;
+	}
+	
+	/**
 	 * Getter for x
 	 * @return
 	 */

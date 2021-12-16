@@ -45,17 +45,7 @@ public class Sphere extends Tracable {
 		double t1 = (-b-Math.sqrt(disc))/2*a;
 		double t2 = (-b+Math.sqrt(disc))/2*a;
 		
-		//System.out.println("Intersects at: " + ray.getPoint((float)t1) + " and " + ray.getPoint((float)t2));
-//		
-//		if (t1 < 0 && t2 >= 0) {
-//			return t2;
-//		} else {
-//			return t1;
-//		}
-		
 		return new double[] {t1,t2};
-		
-		//return (-b-Math.sqrt(disc))/2*a;
 	}
 	
 	public Vector getNormal(Point p) {
@@ -104,5 +94,12 @@ public class Sphere extends Tracable {
 		}
 		
 		System.out.println(Math.sqrt(-1));
+	}
+
+	@Override
+	public AABB generateAABB() {
+		Point min = new Point(c.x()-r,c.y()-r,c.z()-r);
+		Point max = new Point(c.x()+r,c.y()+r,c.z()+r);
+		return new AABB(min,max);
 	}
 }
