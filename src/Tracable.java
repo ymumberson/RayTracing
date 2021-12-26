@@ -4,6 +4,7 @@ public abstract class Tracable {
 	protected Color ambient;
 	protected Color diffuse;
 	protected Color specular;
+	protected AABB aabb;
 	
 	protected double reflectedPercent;
 	protected double refractedPercent;
@@ -122,6 +123,10 @@ public abstract class Tracable {
 	 * @return The AABB
 	 */
 	public abstract AABB generateAABB();
+	
+	public AABB getAABB() {
+		return this.aabb;
+	}
 	
 	public static void main(String[] args) {
 //		Sphere s = new Sphere(new Point(0, 0, 100), 100);

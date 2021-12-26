@@ -26,6 +26,7 @@ public class Rectangle extends Tracable{
 			VALID_RECT = false;
 			System.out.println(this);
 		}
+		this.aabb = this.generateAABB();
 	}
 	
 	public Rectangle(Point topLeft, Point topRight, Point bottomRight, Point bottomLeft) {
@@ -38,7 +39,7 @@ public class Rectangle extends Tracable{
 			VALID_RECT = false;
 			System.out.println(this);
 		}
-		
+		this.aabb = this.generateAABB();
 //		Vector a = new Vector(bottomLeft.subtract(topLeft));
 //		Vector b = new Vector(topRight.subtract(topLeft));
 //		norm = b.cross(a);

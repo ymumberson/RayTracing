@@ -7,6 +7,7 @@ public class Sphere extends Tracable {
 	public Sphere(Point c, float r) {
 		this.c = c;
 		this.r = r;
+		this.aabb = this.generateAABB();
 	}
 	
 	public Point c() {

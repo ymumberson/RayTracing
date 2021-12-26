@@ -10,6 +10,7 @@ public class Triangle extends Tracable {
 		this.p2 = p2;
 		this.p0 = p0;
 		this.norm = this.calculateNorm();
+		this.aabb = this.generateAABB();
 	}
 	
 	public Point[] getPoints() {

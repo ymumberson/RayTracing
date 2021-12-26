@@ -1,5 +1,9 @@
 import java.util.ArrayList;
 import java.util.Scanner;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
 
 import javafx.application.Application;
 import javafx.beans.value.ChangeListener;
@@ -30,6 +34,7 @@ public class Main extends Application {
     private KdTree tree;
     private long startTime;
     private long lastDuration = 0;
+    private long totalTime;
 	
 	public static void main(String[] args) {
 		launch(args);
@@ -91,8 +96,11 @@ public class Main extends Application {
 		System.out.println(tree.getNumTracables());
 		
 		startTimer("Rendering Scene.");
-		render(img,(int)lightX);
+//		render(img,(int)lightX);
+		renderParallel(img,(int)lightX);
 		finishTimer();
+		
+		System.out.println("Total time: " + totalTime);
 	}
 	
 	public void initialiseBunnyTracables() {
@@ -139,7 +147,7 @@ public class Main extends Application {
 //					Float.parseFloat(str[1])*scalar,
 //					Float.parseFloat(str[2])*scalar + z_axis/2);
 				
-//				colourList[i] = Double.valueOf(str[3]); //Only 
+//				colourList[i] = Double.valueOf(str[3]); //Only for bunny
 				
 				Point p = new Point(
 						Float.parseFloat(str[2])*scalar,
@@ -354,6 +362,90 @@ public class Main extends Application {
         tracableObjects.add(s4);
 	}
 	
+	public void renderParallel(WritableImage img, int lightX) {
+		int w=(int) img.getWidth(), h=(int) img.getHeight();
+        PixelWriter image_writer = img.getPixelWriter();
+        
+        light = new Point(lightX,0,0);
+        camera = new Point(w/2.0f,h/2.0f,-1000f);
+        
+        //For test camera model//
+        float imgWidth = 4f;
+        float imgHeight = 3f;
+        float imgAspectRatio = (imgWidth/imgHeight);
+        float fov = 45;
+        
+        ExecutorService EXEC = Executors.newCachedThreadPool();
+        ArrayList<Callable<Void>> tasks = new ArrayList<Callable<Void>>();
+        
+        for (int j=0; j<h; j++) {
+        	double pixelY = 1-2*((j+0.5)/h);
+        	double camY = (2*pixelY-1) * Math.tan(fov/2 * Math.PI/180);
+        	for (int i=0; i<w; i++) {
+        		
+        		//Playing around with new camera model//
+        		double pixelX = 1-2*((i+0.5)/w);
+        		
+        		//Super Sampling (Not adaptive so quite slow) -> Value for n => n*n samples
+        		int n = 1;
+        		if (n > 1) { //ie if super sampling
+            		float step = 1f/n;
+            		float redAcc = 0;
+            		float greenAcc = 0;
+            		float blueAcc = 0;
+            		float upperBound = n/2f;
+            		for (float x=-upperBound; x<upperBound; x++) {
+            			double i2 = i+x*step;
+            			for (float y=-upperBound; y<upperBound; y++) {
+            				double j2 = j+y*step;
+            				
+            				Vector rayVec2 = new Vector(i2+0.5-camera.x(), j2+0.5-camera.y(), -camera.z());
+                    		rayVec2.normalise();
+                    		Ray r2 = new Ray(new Point(i2,j2,-1), rayVec2);
+                    		Color c = trace(r2, MAX_RECURSIVE_DEPTH);
+                    		redAcc += c.getRed();
+                    		greenAcc += c.getGreen();
+                    		blueAcc += c.getBlue();
+            			}
+            		}
+            		redAcc /= n*n; redAcc = (redAcc > 1) ? 1 : (redAcc < 0) ? 0 : redAcc;
+            		greenAcc /= n*n; greenAcc = (greenAcc > 1) ? 1 : (greenAcc < 0) ? 0 : greenAcc;
+            		blueAcc /= n*n; blueAcc = (blueAcc > 1) ? 1 : (blueAcc < 0) ? 0 : blueAcc;
+            		image_writer.setColor(i, j, Color.color(redAcc, greenAcc, blueAcc));
+//            		image_writer.setColor(i, h-1-j, Color.color(redAcc, greenAcc, blueAcc));
+        		} else { //Just 1 ray so no super sampling
+        			// Creating the ray //
+            		Vector rayVec = new Vector(i-camera.x(), j-camera.y(), -camera.z());
+            		rayVec.normalise();
+            		Ray r = new Ray(new Point(i,j,-1), rayVec); //Persepective projection
+            		//Ray r = new Ray(new Point(i,j,0), new Vector(0,0,1)); //Authnographic projection
+            		final int i2 = i;
+            		final int j2 = j;
+            		Callable<Void> c = new Callable<Void>() {
+						@Override
+						public Void call() throws Exception {
+							// TODO Auto-generated method stub
+							image_writer.setColor(i2, j2, trace(r,MAX_RECURSIVE_DEPTH));
+//							System.out.println(i2 + " " + j2);
+							return null;
+						}
+            		};
+            		tasks.add(c);
+//            		image_writer.setColor(i, j, trace(r,MAX_RECURSIVE_DEPTH));
+        		}
+        	}
+        }
+        long start1 = System.currentTimeMillis();
+        try {
+			EXEC.invokeAll(tasks);
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+        long finish1 = System.currentTimeMillis();
+        System.out.println(finish1-start1);
+	}
+	
 	public void render(WritableImage img, int lightX) {
 		int w=(int) img.getWidth(), h=(int) img.getHeight();
         PixelWriter image_writer = img.getPixelWriter();
@@ -386,7 +478,7 @@ public class Main extends Application {
 //        		image_writer.setColor(i, j, trace(r,MAX_RECURSIVE_DEPTH));
         		
         		//Super Sampling (Not adaptive so quite slow) -> Value for n => n*n samples
-        		int n = 3;
+        		int n = 1;
         		if (n > 1) { //ie if super sampling
             		float step = 1f/n;
             		float redAcc = 0;
@@ -625,6 +717,7 @@ public class Main extends Application {
 	public void finishTimer() {
 		long finishTime = System.currentTimeMillis();
 		lastDuration = finishTime - startTime;
+		totalTime += lastDuration;
 		System.out.println("Duration: " + lastDuration + "ms.");
 	}
 }

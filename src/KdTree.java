@@ -26,7 +26,7 @@ public class KdTree extends AABB{
 			ArrayList<Tracable> rightLs = new ArrayList<Tracable>();
 			for (int i=0; i<ls.size(); i++) {
 				Tracable tr = ls.get(i);
-				AABB objBox = tr.generateAABB();
+				AABB objBox = tr.getAABB();
 				if (objBox.overlaps(this.left)) {leftLs.add(tr);}
 				if (objBox.overlaps(this.right)) {rightLs.add(tr);}
 //				if (!objBox.overlaps(this.left) && !objBox.overlaps(right)) {
