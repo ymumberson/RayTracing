@@ -4,7 +4,6 @@ public abstract class Tracable {
 	protected Color ambient;
 	protected Color diffuse;
 	protected Color specular;
-	protected AABB aabb;
 	
 	protected double reflectedPercent;
 	protected double refractedPercent;
@@ -15,7 +14,7 @@ public abstract class Tracable {
 	 * @param r
 	 * @return
 	 */
-	public abstract double[] getIntersect(Ray r);
+	public abstract double getIntersect(Ray r);
 	
 	 /**
 	  * Returns true if the ray intersects the object
@@ -23,7 +22,7 @@ public abstract class Tracable {
 	  * @return
 	  */
 	public boolean doesIntersect(Ray r) {
-		return (this.getIntersect(r)[0] >= 0);
+		return (this.getIntersect(r) >= 0);
 	}
 	
 	public abstract Vector getNormal(Point p);
@@ -98,6 +97,10 @@ public abstract class Tracable {
 		return refractedPercent > 0;
 	}
 	
+	public boolean isDiffuse() {
+		return !isRefractive() && !isReflective();
+	}
+	
 	public double getRefractedPercent() {
 		return refractedPercent;
 	}
@@ -123,10 +126,6 @@ public abstract class Tracable {
 	 * @return The AABB
 	 */
 	public abstract AABB generateAABB();
-	
-	public AABB getAABB() {
-		return this.aabb;
-	}
 	
 	public static void main(String[] args) {
 //		Sphere s = new Sphere(new Point(0, 0, 100), 100);

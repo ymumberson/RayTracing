@@ -26,7 +26,7 @@ public class KdTree extends AABB{
 			ArrayList<Tracable> rightLs = new ArrayList<Tracable>();
 			for (int i=0; i<ls.size(); i++) {
 				Tracable tr = ls.get(i);
-				AABB objBox = tr.getAABB();
+				AABB objBox = tr.generateAABB();
 				if (objBox.overlaps(this.left)) {leftLs.add(tr);}
 				if (objBox.overlaps(this.right)) {rightLs.add(tr);}
 //				if (!objBox.overlaps(this.left) && !objBox.overlaps(right)) {
@@ -62,6 +62,12 @@ public class KdTree extends AABB{
 			double newX = (min.x() + max.x())/2f;
 			minSplitPoint = new Point(newX,max.y(),max.z());
 			maxSplitPoint = new Point(newX,min.y(),min.z());
+			
+			//Trying to fix line in middle of screen :(
+//			double newXMin = Math.ceil((min.x() + max.x())/2f);
+//			double newXMax = Math.floor((min.x() + max.x())/2f);
+//			minSplitPoint = new Point(newXMin,max.y(),max.z());
+//			maxSplitPoint = new Point(newXMax,min.y(),min.z());
 		}
 		
 		//Creates left and right kd-tree using the split plane
@@ -86,7 +92,7 @@ public class KdTree extends AABB{
 			//Finding the first intersection
 			for (int i=0; i<tracables.size(); i++) {
 				Tracable trac = tracables.get(i);
-				double t = trac.getIntersect(r)[0];
+				double t = trac.getIntersect(r);
 				if (t < smallestT && t >= 0) {
 					smallestT = t;
 					index = i;
@@ -100,8 +106,8 @@ public class KdTree extends AABB{
 			}
 		} else {
 			//Get intersects for left and right tree
-			double leftT = left.getIntersect(r)[0];
-			double rightT = right.getIntersect(r)[0];
+			double leftT = left.getIntersect(r);
+			double rightT = right.getIntersect(r);
 			boolean intersectsLeft = leftT >= 0;
 			boolean intersectsRight = rightT >= 0;
 			
@@ -136,6 +142,79 @@ public class KdTree extends AABB{
 				}
 			} else {
 				Tracable rightTrac = right.getTracable(r);
+				if (rightTrac != null) {
+					return rightTrac;
+				}
+			}
+			return null;
+		}
+	}
+	
+	public Tracable getTracableIgnoreSelf(Ray r, Tracable self) {
+		if (isLeaf()) {
+			if (tracables.size() == 0) {
+//				System.out.println("Empty Leaf");
+				return null;
+			}
+			//Storing the first intersection
+			int index = -1;
+			double smallestT = Double.POSITIVE_INFINITY;
+			
+			//Finding the first intersection
+			for (int i=0; i<tracables.size(); i++) {
+				Tracable trac = tracables.get(i);
+				if (trac != self) {
+					double t = trac.getIntersect(r);
+					if (t < smallestT && t >= 0) {
+						smallestT = t;
+						index = i;
+					}
+				}
+			}
+			
+			if (smallestT >= 0 && index >= 0) { //If there was an intersection
+				return tracables.get(index);
+			} else { //Otherwise nothing intersected
+				return null;
+			}
+		} else {
+			//Get intersects for left and right tree
+			double leftT = left.getIntersect(r);
+			double rightT = right.getIntersect(r);
+			boolean intersectsLeft = leftT >= 0;
+			boolean intersectsRight = rightT >= 0;
+			
+			if (!intersectsLeft && !intersectsRight) {
+				return null;
+			} else if (intersectsLeft && intersectsRight){
+				if (leftT < rightT) {
+					Tracable leftTrac = left.getTracableIgnoreSelf(r,self);
+					if (leftTrac != null) {
+						return leftTrac;
+					}
+					Tracable rightTrac = right.getTracableIgnoreSelf(r,self);
+					if (rightTrac != null) {
+						return rightTrac;
+					}
+					return null;
+				} else {
+					Tracable rightTrac = right.getTracableIgnoreSelf(r,self);
+					if (rightTrac != null) {
+						return rightTrac;
+					}
+					Tracable leftTrac = left.getTracableIgnoreSelf(r,self);
+					if (leftTrac != null) {
+						return leftTrac;
+					}
+					return null;
+				}
+			} else if (intersectsLeft) {
+				Tracable leftTrac = left.getTracableIgnoreSelf(r,self);
+				if (leftTrac != null) {
+					return leftTrac;
+				}
+			} else {
+				Tracable rightTrac = right.getTracableIgnoreSelf(r,self);
 				if (rightTrac != null) {
 					return rightTrac;
 				}

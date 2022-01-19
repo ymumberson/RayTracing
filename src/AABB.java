@@ -26,15 +26,6 @@ public class AABB extends Tracable{
 		this.max = max;
 	}
 	
-	/**
-	 * True if the given ray intersects the bounding box
-	 * @param r Ray to check for intersection with box
-	 * @return True if ray intersects the box
-	 */
-	public boolean doesIntersect(Ray r) {
-		return this.getIntersect(r)[0] >= 0;
-	}
-	
 	public Point getMin() {
 		return min;
 	}
@@ -48,7 +39,7 @@ public class AABB extends Tracable{
 	 * @param r Ray to check for intersection with box
 	 * @return First point of intersection, or null if no intersection
 	 */
-	public double[] getIntersect(Ray r) {
+	public double getIntersect(Ray r) {
 		float tmin = (float) ((min.x() - r.o().x()) / (float)r.d().dx());
 		float tmax = (float) ((max.x() - r.o().x()) / (float)r.d().dx());
 		
@@ -67,7 +58,7 @@ public class AABB extends Tracable{
 			tymin = temp;
 		}
 		
-		if ((tmin > tymax) || (tymin > tmax)) {return new double[] {-1};}
+		if ((tmin > tymax) || (tymin > tmax)) {return -1;}
 		
 		if (tymin > tmin) {
 			tmin = tymin;
@@ -86,7 +77,7 @@ public class AABB extends Tracable{
 			tzmin = temp;
 		}
 		
-		if ((tmin > tzmax) || (tzmin > tmax)) {return new double[] {-1};}
+		if ((tmin > tzmax) || (tzmin > tmax)) {return -1;}
 		
 		if (tzmin > tmin) {
 			tmin = tzmin;
@@ -96,7 +87,14 @@ public class AABB extends Tracable{
 			tmax = tzmax;
 		}
 		
-		return new double[] {tmin,tmax};
+		if (tmin < 0) {
+//			System.out.println(tmin + " " + tmax);
+			return tmax;
+		}
+		return tmin;
+		
+//		return tmin;
+//		return new double[] {tmin,tmax};
 	}
 	
 	/**

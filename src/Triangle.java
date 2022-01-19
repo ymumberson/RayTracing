@@ -10,7 +10,6 @@ public class Triangle extends Tracable {
 		this.p2 = p2;
 		this.p0 = p0;
 		this.norm = this.calculateNorm();
-		this.aabb = this.generateAABB();
 	}
 	
 	public Point[] getPoints() {
@@ -30,7 +29,7 @@ public class Triangle extends Tracable {
 	}
 	
 //	@Override
-	public double[] getIntersect(Ray r) {
+	public double getIntersect(Ray r) {
 		final double EPSILON = 0.000001;
 		Vector edge1 = new Vector(p1.subtract(p0));
 		Vector edge2 = new Vector(p2.subtract(p0));
@@ -38,7 +37,7 @@ public class Triangle extends Tracable {
 		double det = edge1.dot(pvec);
 		
 		if (Math.abs(det) < EPSILON) {
-			return new double[] {-1};
+			return -1;
 		}
 		
 		double invDet = (1.0/det);
@@ -46,29 +45,21 @@ public class Triangle extends Tracable {
 		Vector tvec = new Vector(r.o().subtract(p0));
 		double u = tvec.dot(pvec) * invDet;
 		if (u < 0 || u > 1) {
-			return new double[] {-1};
+			return -1;
 		}
 		
 		Vector qvec = tvec.cross(edge1);
 		double v = r.d().dot(qvec) * invDet;
 		if (v < 0 || u+v > 1) {
-			return new double[] {-1};
+			return -1;
 		}
 		
-		double t = edge2.dot(qvec) * invDet;
-
-		return new double[] {t};
-//		AABB box = this.generateAABB();
-//		return box.getIntersect(r);
+//		double t = edge2.dot(qvec) * invDet;
+//		return t;
+		return edge2.dot(qvec) * invDet;
 	}
 	
 	public Vector getNormal() {
-//		Vector v0v1 = new Vector(p1.subtract(p0));
-//		Vector v0v2 = new Vector(p2.subtract(p0));
-//		Vector triangleNorm = v0v2.cross(v0v1);
-//		return triangleNorm;
-		//return triangleNorm.absolute().multiply(-1);
-		
 		return this.norm;
 	}
 	

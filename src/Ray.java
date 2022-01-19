@@ -37,6 +37,12 @@ public class Ray {
 		return new Point(x,y,z);
 	}
 	
+	public double getT(Point p) {
+		return ((p.x()-origin.x())/direction.dx()
+				+ (p.y()-origin.y())/direction.dy()
+				+ (p.z()-origin.z())/direction.dz())/3f;
+	}
+	
 	/**
 	 * Getter for direction
 	 * @return

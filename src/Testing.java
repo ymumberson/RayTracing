@@ -1,4 +1,9 @@
 import java.util.ArrayList;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CompletionService;
+import java.util.concurrent.ExecutorCompletionService;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import javafx.scene.paint.Color;
 
@@ -13,7 +18,45 @@ public class Testing {
 		//testSphereAABB();
 		//randomTesting();
 //		triangleTesting();
-		kdTreeTesting();
+//		kdTreeTesting();
+//		Testing t = new Testing();
+//		t.concurrentTesting();
+		vectorTesting();
+	}
+	
+	public static void vectorTesting() {
+		Vector v1 = new Vector(0,0,0);
+		Vector v2 = new Vector(2,2,2);
+//		Vector v3 = v1 + v2;
+	}
+	
+	public void concurrentTesting() {
+		ExecutorService EXEC = Executors.newCachedThreadPool();
+		CompletionService<Void> compService = new ExecutorCompletionService<>(EXEC);
+//        ArrayList<Callable<Void>> tasks = new ArrayList<Callable<Void>>();
+        for (int i=0; i<10; i++) {
+        	Task task = new Task(i);
+        	compService.submit(task);
+        }
+        EXEC.shutdown();
+	}
+	
+	private final class Task implements Callable<Void> {
+		private int x;
+		Task(int x) {
+			this.x = x;
+		}
+		
+		@Override public Void call() {
+			return printLoop(x);
+		}
+	}
+	
+	private Void printLoop(int x) {
+		for (int y=0; y<10; y++) {
+			System.out.println(x);
+		}
+		return null;
 	}
 	
 	public static void kdTreeTesting() {
@@ -41,8 +84,8 @@ public class Testing {
 		Point p3 = new Point(5,5,0);
 		Triangle t = new Triangle(p1,p2,p3);
 		Ray r = new Ray(new Point(1,10,-10), new Vector(0,0,1));
-		double[] inter = t.getIntersect(r);
-		System.out.println(inter[0]);
+		double inter = t.getIntersect(r);
+		System.out.println(inter);
 	}
 	
 	public static void randomTesting() {
@@ -62,7 +105,7 @@ public class Testing {
 	        
 	        System.out.println(triangle.doesIntersect(r));
 	        
-	        Point intersection = r.getPoint(triangle.getIntersect(r)[0]);
+	        Point intersection = r.getPoint(triangle.getIntersect(r));
 	        System.out.println(intersection + " " + p1);
 	        
 	        Vector n = triangle.getNormal(intersection);
