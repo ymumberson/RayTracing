@@ -46,6 +46,7 @@ public class KdTree extends AABB{
 		//For storing points for split
 		Point minSplitPoint;
 		Point maxSplitPoint;
+		double padding = 0.0001;
 		
 		switch (splitDim) {
 		case 1: //Splitting in y plane

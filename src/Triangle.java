@@ -30,6 +30,7 @@ public class Triangle extends Tracable {
 	
 //	@Override
 	public double getIntersect(Ray r) {
+//		return this.generateAABB().getIntersect(r); //For drawing boxes instead of triangles
 		final double EPSILON = 0.000001;
 		Vector edge1 = new Vector(p1.subtract(p0));
 		Vector edge2 = new Vector(p2.subtract(p0));
@@ -97,14 +98,15 @@ public class Triangle extends Tracable {
 
 	@Override
 	public AABB generateAABB() {
+		double padding = 0.0001; //Added padding so AABB isn't 2D in case of axis-aligned triangle
 		Point min = new Point(
-				Math.min(p0.x(),Math.min(p1.x(), p2.x())),
-				Math.min(p0.y(),Math.min(p1.y(), p2.y())),
-				Math.min(p0.z(),Math.min(p1.z(), p2.z())));
+				Math.min(p0.x(),Math.min(p1.x(), p2.x()))-padding,
+				Math.min(p0.y(),Math.min(p1.y(), p2.y()))+padding,
+				Math.min(p0.z(),Math.min(p1.z(), p2.z()))-padding);
 		Point max = new Point(
-				Math.max(p0.x(),Math.max(p1.x(), p2.x())),
-				Math.max(p0.y(),Math.max(p1.y(), p2.y())),
-				Math.max(p0.z(),Math.max(p1.z(), p2.z())));
+				Math.max(p0.x(),Math.max(p1.x(), p2.x())+padding),
+				Math.max(p0.y(),Math.max(p1.y(), p2.y()))-padding,
+				Math.max(p0.z(),Math.max(p1.z(), p2.z()))+padding);
 		return new AABB(min,max);
 	}
 }

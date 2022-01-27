@@ -28,10 +28,10 @@ public class Sphere extends Tracable {
 		double t1 = (-b-Math.sqrt(disc))/2*a;
 		double t2 = (-b+Math.sqrt(disc))/2*a;
 		
-//		if (t1 < 0) { //ie first intersect is behind camera, or both miss
-////			System.out.println(t1 + ", " + t2);
-//			return t2;
-//		}
+		if (t1 < 0) { //ie first intersect is behind camera, or both miss
+//			System.out.println(t1 + ", " + t2);
+			return t2;
+		}
 		return t1; //Otherwise first intersect is in front of camera and there is an intersect
 	}
 	

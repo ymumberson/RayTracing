@@ -62,7 +62,7 @@ public class Main extends Application {
         VBox vb = new VBox();
         Slider lightSlider = new Slider(0,x_axis,0);
         Button lightButton = new Button("Start");
-        vb.getChildren().addAll(imgView,lightSlider);
+        vb.getChildren().addAll(imgView,lightSlider,lightButton);
         root.getChildren().addAll(vb);
         
         lightSlider.valueProperty().addListener( 
@@ -75,18 +75,133 @@ public class Main extends Application {
     	    });
         
         lightButton.setOnMouseClicked(e -> {
-        	for (int i=0; i<= x_axis; i++) {
-        		render(img,i);
+        	render(img,10);
+        	if (!tree.isLeaf()) {
+        		tree = tree.getLeft();
         	}
         });
         
 //        traceSampleScene(img,10);
 //        traceBunny(img, 10);
         traceActualScene(img,y_axis/2);
+//        tracePresentationStuff(img);
         
         Scene scene = new Scene(root, x_axis, y_axis+20);
         primaryStage.setScene(scene);
         primaryStage.show();
+	}
+	
+	public void tracePresentationStuff(WritableImage img) {
+		double lightX = (x_axis-1)*0.9;
+		initialisePresentationStuff();
+		
+		
+		buildKdTree(20,3);
+		
+		startTimer("Rendering Scene.");
+		render(img,(int)lightX);
+		finishTimer();
+		
+		System.out.println("Total time: " + totalTime);
+	}
+	
+	public void initialisePresentationStuff() {
+		//For phong
+		Sphere s = new Sphere(new Point(x_axis/2,y_axis/2,z_axis-100),100);
+		s.setColor(Color.RED);
+		s.setSpecular(Color.color(1, 1, 1));
+		tracableObjects.add(s);
+		
+		//Lets draw a triangle or 2
+//		Triangle t1 = new Triangle(
+//				new Point(100,100,0),
+//				new Point(300,100,0),
+//				new Point(100,300,0));
+//		t1.setColor(Color.AQUA);
+//		tracableObjects.add(t1);
+//		
+//		Triangle t2 = new Triangle(
+//				new Point(x_axis-100,y_axis-100,0),
+//				new Point(x_axis-300,y_axis-100,0),
+//				new Point(x_axis-100,y_axis-300,0));
+//		t2.setColor(Color.AQUA);
+//		tracableObjects.add(t2);
+		
+		//Lets make a rectangle
+//		Point p1 = new Point(x_axis/2-100,y_axis/2-100,0);
+//		Point p2 = new Point(x_axis/2+100,y_axis/2-100,0);
+//		Point p3 = new Point(x_axis/2+100,y_axis/2+100,0);
+//		Point p4 = new Point(x_axis/2-100,y_axis/2+100,0);
+//		Triangle t1 = new Triangle(p1,p2,p4);
+//		Triangle t2 = new Triangle(p2,p3,p4);
+////		t1.setColor(Color.AQUA);
+////		tracableObjects.add(t1);
+////		t2.setColor(Color.AQUA);
+////		tracableObjects.add(t2);
+//		Rectangle r = new Rectangle(t1,t2);
+//		r.setColor(Color.AQUA);
+//		tracableObjects.add(r);
+		
+		Rectangle floor = new Rectangle(new Point(0,y_axis,z_axis), 
+				new Point(x_axis,y_axis,z_axis),
+				new Point(x_axis,y_axis,0),
+				new Point(0,y_axis,0));
+        floor.setColor(Color.color(0.7,0.7,0.7));
+        floor.setSpecular(Color.color(0, 0, 0));
+//        floor.setReflectedPercent(0.5);
+        
+        Rectangle wall1 = new Rectangle(
+        		new Point(0,0,0),
+        		new Point(0,0,z_axis),
+        		new Point(0,y_axis,z_axis),
+        		new Point(0,y_axis,0));
+        wall1.setColor(Color.color(0.5, 0, 0));
+        wall1.setSpecular(Color.color(0, 0, 0));
+        
+        Rectangle wall2 = new Rectangle(
+        		new Point(0,0,z_axis),
+        		new Point(x_axis,0,z_axis),
+        		new Point(x_axis,y_axis,z_axis),
+        		new Point(0,y_axis,z_axis));
+//        wall2.setColor(Color.color(0.5, 0.2, 0));
+        wall2.setColor(Color.color(0.7,0.7,0.7));
+        wall2.setSpecular(Color.color(0, 0, 0));
+        
+        Rectangle wall3 = new Rectangle(
+        		new Point(x_axis,0,z_axis),
+        		new Point(x_axis,0,0),
+        		new Point(x_axis,y_axis,0),
+        		new Point(x_axis,y_axis,z_axis));
+        wall3.setColor(Color.color(0, 0.5, 0));
+        wall3.setSpecular(Color.color(0, 0, 0));
+        
+        Rectangle ceiling = new Rectangle(
+        		new Point(0,0,0),
+        		new Point(x_axis,0,0),
+        		new Point(x_axis,0,z_axis),
+        		new Point(0,0,z_axis));
+        ceiling.setColor(Color.color(0.7,0.7,0.7));
+        ceiling.setSpecular(Color.color(0, 0, 0));
+        
+        tracableObjects.add(floor);
+        tracableObjects.add(wall1);
+        tracableObjects.add(wall2);
+        tracableObjects.add(wall3);
+        tracableObjects.add(ceiling);
+        
+        int radReflect = 100;
+        Sphere sReflect = new Sphere(new Point(radReflect+10,y_axis-radReflect,z_axis/2),radReflect);
+        sReflect.setReflectedPercent(0.8);
+        sReflect.setColor(Color.WHITE);
+        sReflect.setRefractiveIndex(1.5);
+        tracableObjects.add(sReflect);
+        
+        int radRefract = 50;
+        Sphere sRefract = new Sphere(new Point(x_axis/2+radRefract,y_axis*2/3,radRefract),radRefract);
+        sRefract.setRefractedPercent(0.8);
+        sRefract.setColor(Color.WHITE);
+        sRefract.setRefractiveIndex(1.5);
+        tracableObjects.add(sRefract);
 	}
 	
 	public void traceBunny(WritableImage img, int recursiveCutoff) {
@@ -106,10 +221,10 @@ public class Main extends Application {
 	public void initialiseBunnyTracables() {
 		//File f = new File("BunnyTest.ply");
 //		File f = new File("dragon_vrip.ply"); // @ 871414 triangles
-		File f = new File("bun_zipper.ply"); //Very high res @ 69451 triangles
+//		File f = new File("bun_zipper.ply"); //Very high res @ 69451 triangles
 //		File f = new File("bun_zipper_res2.ply"); //High res @ 16301 triangles
 //		File f = new File("bun_zipper_res3.ply"); //Medium res @ 3851 triangles
-//		File f = new File("bun_zipper_res4.ply"); //Low res @ 948 triangles
+		File f = new File("bun_zipper_res4.ply"); //Low res @ 948 triangles
 		Scanner in;
 		try {
 			in = new Scanner(f);
@@ -139,8 +254,7 @@ public class Main extends Application {
 			
 			Point[] pointList = new Point[numVertex];
 			double[] colourList = new double[numVertex];
-//			float scalar = 2000;
-			float scalar = 1000;
+			float scalar = 2000;
 			for (int i=0; i<(numVertex); i++) {
 				String[] str = in.nextLine().split(" ");	
 //				pointList[i] = new Point(
@@ -162,9 +276,9 @@ public class Main extends Application {
 //				double py = p.y() * -1 + 400;
 //				double pz = p.z() * 1 + 200;
 				
-				double px = p.z()*1 + 300+200+50;
-				double py = p.y() * -1 + 400+400;
-				double pz = p.x() * -1 + 200 + 200+50+50;
+				double px = p.z()*1 + 300;
+				double py = p.y() * -1 + 400;
+				double pz = p.x() * -1 + 200;
 				
 				Point p2 = new Point(px,py,pz);
 				//System.out.println(p + " -> " + p2);
@@ -441,6 +555,7 @@ public class Main extends Application {
 		s1.setColor(Color.WHITE);
 		s1.setReflectedPercent(0.9);
 		s1.setRefractiveIndex(1.5f);
+		s1.setSpecular(Color.BLACK);
 		tracableObjects.add(s1);
 		
 		int rad2 = 100;
@@ -448,6 +563,7 @@ public class Main extends Application {
 		s2.setColor(Color.WHITE);
 		s2.setRefractedPercent(0.9);
 		s2.setRefractiveIndex(1.5f);
+		s2.setSpecular(Color.BLACK);
 		tracableObjects.add(s2);
 		
 		Rectangle floor = new Rectangle(new Point(0,y_axis,z_axis), 
@@ -519,7 +635,7 @@ public class Main extends Application {
         PixelWriter image_writer = img.getPixelWriter();
         
 //        light = new Point(lightX,0,0);
-        light = new Point(lightX,y_axis/3,-100);
+        light = new Point(lightX,y_axis/3,-10);
 //        light = new Point(lightX,y_axis/2,z_axis/2);
         camera = new Point(w/2.0f,h/2.0f,-1000f);
         
@@ -591,7 +707,15 @@ public class Main extends Application {
             		Ray r = new Ray(new Point(i,j,-1), rayVec); //Persepective projection
             		//Ray r = new Ray(new Point(i,j,0), new Vector(0,0,1)); //Authnographic projection
             		
+            		//Debugging 'dead pixels' from triangles
+//            		Color col = trace(r,MAX_RECURSIVE_DEPTH);
+//            		if (col == Color.BLACK) {
+//            			System.out.println(i + " " + j);
+//            		}
+//            		image_writer.setColor(i, j, col);
+            		
             		image_writer.setColor(i, j, trace(r,MAX_RECURSIVE_DEPTH));
+//            		image_writer.setColor(i, j, traceTree(r,MAX_RECURSIVE_DEPTH));
 //            		image_writer.setColor(i, j, traceTest(r));
             		
 //            		image_writer.setColor(i, h-1-j, trace(r,MAX_RECURSIVE_DEPTH)); //Flipped in y-axis
@@ -599,6 +723,17 @@ public class Main extends Application {
         	}
 //        	System.out.println("Row " + (j+1) + "/" + h + " completed!");
         }
+	}
+	
+	public Color traceTree(Ray r, int recursiveDepth) {
+		if (recursiveDepth < 0) {
+			return Color.BLACK;
+		}
+		if (tree.doesIntersect(r)) {
+			return Color.ANTIQUEWHITE;
+		} else {
+			return Color.BLACK;
+		}
 	}
 	
 	public Color trace(Ray r, int recursiveDepth) {
@@ -666,17 +801,35 @@ public class Main extends Application {
 			Ray toLightR = new Ray(intersection, toLightV);
 //			double lightSphereIntersect = lightSphere.getIntersect(toLightR);
 			
+			//Not working when light is in the room !!!!!!
 			boolean inShadow = false;
 			if (USING_KD_TREES) {
 				Tracable inShadowFrom = tree.getTracableIgnoreSelf(toLightR, currentTracable);
 				if (inShadowFrom != null) {
-					inShadow = true;
+					double tInShadowFrom = inShadowFrom.getIntersect(toLightR);
+//					System.out.println(inShadowFrom);
+					Sphere s = new Sphere(light,0.5f);
+					double tLight = s.getIntersect(toLightR);
+					inShadow = (tInShadowFrom >= 0 && tInShadowFrom < tLight);
+//					inShadow = true;
 				}
 			} else {
+//				for (Object o: tracableObjects) {
+//	    			if (o != currentTracable) {
+//	    				Tracable temp = (Tracable) o;
+//	    				if (temp.getIntersect(toLightR) >= 0) {
+//	    					inShadow = true;
+//	    				}
+//	    			}
+//	    		}
+				
+				Sphere s = new Sphere(light,0.5f);
+				double tLight = s.getIntersect(toLightR);
 				for (Object o: tracableObjects) {
 	    			if (o != currentTracable) {
 	    				Tracable temp = (Tracable) o;
-	    				if (temp.getIntersect(toLightR) >= 0) {
+	    				double tempt = temp.getIntersect(toLightR);
+	    				if (tempt >= 0 && tempt < tLight) {
 	    					inShadow = true;
 	    				}
 	    			}
@@ -891,7 +1044,7 @@ public class Main extends Application {
 		double k = 1 - eta*eta*(1-cosi*cosi);
 		
 		if (k < 0) {
-			System.out.println("Total internal refraction");
+//			System.out.println("Total internal refraction");
 		} else {
 			Vector out = n.multiply((eta * cosi - Math.sqrt(k))).add(i.multiply(eta));
 			out.normalise();
@@ -901,7 +1054,16 @@ public class Main extends Application {
 				Point p = intersection.add(new Point(r.d()));
 				refractedRay = new Ray(p, out);
 			//}
-
+			
+			double t2 = currentTracable.getIntersect(refractedRay); 
+			if (t2 >= 0) {
+				Point p2 = refractedRay.getPoint(t2);
+//				System.out.println("Here");
+//				p = refractedRay.getPoint(t2).add(new Point(refractedRay.d()));
+//				refractedRay = new Ray(p,r.d());
+				return refract(currentTracable,refracPerc,refractedRay,c,p2,recursiveDepth-1);
+			}
+				
 			Color refractionColor = trace(refractedRay,recursiveDepth-1);
 			
 //			double refracPerc = currentTracable.getRefractedPercent();
