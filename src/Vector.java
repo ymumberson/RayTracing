@@ -1,3 +1,4 @@
+import javafx.scene.paint.Color;
 
 public class Vector {
 	private double dx,dy,dz;
@@ -18,6 +19,12 @@ public class Vector {
 		this.dx = dx;
 		this.dy = dy;
 		this.dz = dz;
+	}
+	
+	public Vector(Color c) {
+		this.dx = c.getRed();
+		this.dy = c.getGreen();
+		this.dz = c.getBlue();
 	}
 	
 	public double magnitude() {

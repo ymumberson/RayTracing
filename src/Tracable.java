@@ -97,7 +97,7 @@ public abstract class Tracable {
 		return refractedPercent > 0;
 	}
 	
-	public boolean isDiffuse() {
+	public boolean isDiffuse() { //More of a -> isMatt()
 		return !isRefractive() && !isReflective();
 	}
 	

@@ -32,7 +32,7 @@ public class Main extends Application {
 	private Point light;
     private Point camera;
     private AABB bb; //Bounding box surrounding the scene used as background (well it will be anyway)
-    private int MAX_RECURSIVE_DEPTH = 7;
+    private int MAX_RECURSIVE_DEPTH = 4;
     private int SAMPLES_PER_PIXEL = 1;
     private KdTree tree;
     private long startTime;
@@ -738,7 +738,7 @@ public class Main extends Application {
 	
 	public Color trace(Ray r, int recursiveDepth) {
 		if (recursiveDepth < 0) {
-			System.out.println("Recursive depth cut-off reached"); 
+//			System.out.println("Recursive depth cut-off reached"); 
 			return Color.BLUE;
 		} //Default colour for reaching max recursive depth
 		
@@ -948,7 +948,25 @@ public class Main extends Application {
 				}
 				currentColor = reflect(currentTracable,kt,r,currentColor,intersection,recursiveDepth);
 //				System.out.println("Kr: " + kr + " | Kt: " + (1-kr));
-			} 
+			} else {
+				Vector surfaceNorm = currentTracable.getNormal(intersection);
+				float radius = 100;
+				Sphere s = new Sphere(intersection.add(new Point(surfaceNorm)),radius);
+				Vector reflectDir = new Vector(s.generateRandomUnitPoint().add(s.c()).subtract(intersection));
+//				Vector reflectDir = surfaceNorm.add(new Vector(new Sphere(new Point(1,1,1),1).generateRandomUnitPoint().add(intersection)));
+				reflectDir.normalise();
+				Ray rayDiff = new Ray(intersection.add(new Point(reflectDir)), reflectDir);
+//				System.out.println(surfaceNorm + " " + intersection + " " + rayDiff);
+				Color col = trace(rayDiff, recursiveDepth-1);
+//				System.out.println(recursiveDepth + " " + currentColor + " -hits- " + (col.getRed() + " " + col.getGreen() + " " + col.getBlue()));
+//				System.out.println(col.getRed() + " " + col.getGreen() + " " + col.getBlue());
+				float scalar = 0.5f;
+//				System.out.println("Color before: " + currentColor);
+//				currentColor = currentColor.add(new Vector(col.getRed()*scalar,col.getGreen()*scalar,col.getBlue()*scalar));
+				currentColor = currentColor.multiply(0.5).add(new Vector(col).multiply(scalar));
+//				System.out.println("Color after: " + currentColor);
+//				currentColor = new Vector(col.getRed(),col.getGreen(),col.getBlue());
+			}
 			
 			
 			//Colour normalisation between 0 and 1

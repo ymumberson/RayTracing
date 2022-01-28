@@ -69,4 +69,25 @@ public class Sphere extends Tracable {
 		Point max = new Point(c.x()+r,c.y()+r,c.z()+r);
 		return new AABB(min,max);
 	}
+	
+	public Point generateRandomUnitPoint() {
+		double x = 0;
+		double y = 0;
+		double z = 0;
+		int min = -1;
+		int max = 1;
+		do {
+			x = (Math.random() * (max-min)) + min;
+			y = (Math.random() * (max-min)) + min;
+			z = (Math.random() * (max-min)) + min;
+		} while (x*x + y*y + z*z > 1);
+		return new Point(x,y,z);
+	}
+	
+	public static void main(String[] args) {
+		Sphere s = new Sphere(new Point(10,10,10), 2);
+		for (int i=0; i<10; i++) {
+			System.out.println(s.generateRandomUnitPoint());
+		}
+	}
 }
