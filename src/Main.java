@@ -949,23 +949,12 @@ public class Main extends Application {
 				currentColor = reflect(currentTracable,kt,r,currentColor,intersection,recursiveDepth);
 //				System.out.println("Kr: " + kr + " | Kt: " + (1-kr));
 			} else {
-				Vector surfaceNorm = currentTracable.getNormal(intersection);
-				float radius = 100;
-				Sphere s = new Sphere(intersection.add(new Point(surfaceNorm)),radius);
-				Vector reflectDir = new Vector(s.generateRandomUnitPoint().add(s.c()).subtract(intersection));
-//				Vector reflectDir = surfaceNorm.add(new Vector(new Sphere(new Point(1,1,1),1).generateRandomUnitPoint().add(intersection)));
-				reflectDir.normalise();
-				Ray rayDiff = new Ray(intersection.add(new Point(reflectDir)), reflectDir);
-//				System.out.println(surfaceNorm + " " + intersection + " " + rayDiff);
-				Color col = trace(rayDiff, recursiveDepth-1);
-//				System.out.println(recursiveDepth + " " + currentColor + " -hits- " + (col.getRed() + " " + col.getGreen() + " " + col.getBlue()));
-//				System.out.println(col.getRed() + " " + col.getGreen() + " " + col.getBlue());
-				float scalar = 0.5f;
-//				System.out.println("Color before: " + currentColor);
-//				currentColor = currentColor.add(new Vector(col.getRed()*scalar,col.getGreen()*scalar,col.getBlue()*scalar));
-				currentColor = currentColor.multiply(0.5).add(new Vector(col).multiply(scalar));
-//				System.out.println("Color after: " + currentColor);
-//				currentColor = new Vector(col.getRed(),col.getGreen(),col.getBlue());
+				int numRays = 20;
+				float diffusePerc = 0.5f;
+				currentColor = currentColor.multiply(1-diffusePerc);
+				for (int i=0; i<numRays; i++) {
+					currentColor = currentColor.add(diffuseReflect(currentTracable,intersection,diffusePerc/numRays,recursiveDepth-1));
+				}
 			}
 			
 			
@@ -1091,6 +1080,19 @@ public class Main extends Application {
 			blue += refracPerc*refractionColor.getBlue();
 		}
 		return new Vector(red,green,blue);
+	}
+	
+	public Vector diffuseReflect(Tracable currentTracable, Point intersection, float rayScalar, int recursiveDepth) {
+		Vector surfaceNorm = currentTracable.getNormal(intersection);
+		float radius = 100;
+		Sphere s = new Sphere(intersection.add(new Point(surfaceNorm)),radius);
+		
+		Vector reflectDir = new Vector(s.generateRandomUnitPoint().add(s.c()).subtract(intersection));
+		reflectDir.normalise();
+		Ray rayDiff = new Ray(intersection.add(new Point(reflectDir)), reflectDir);
+		Color col = trace(rayDiff, recursiveDepth-1);
+		
+		return new Vector(col).multiply(rayScalar);
 	}
 	
 	public Color traceTest(Ray r) {
