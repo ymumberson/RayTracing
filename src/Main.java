@@ -33,12 +33,12 @@ public class Main extends Application {
     private Point camera;
     private AABB bb; //Bounding box surrounding the scene used as background (well it will be anyway)
     private int MAX_RECURSIVE_DEPTH = 4;
-    private int SAMPLES_PER_PIXEL = 1;
+    private int SAMPLES_PER_PIXEL = 2;
     private KdTree tree;
     private long startTime;
     private long lastDuration = 0;
     private long totalTime;
-    private boolean USING_KD_TREES = true;
+    private boolean USING_KD_TREES = false;
 	
 	public static void main(String[] args) {
 		launch(args);
@@ -581,6 +581,7 @@ public class Main extends Application {
         		new Point(0,y_axis,0));
         wall1.setColor(Color.color(0.5, 0, 0));
         wall1.setSpecular(Color.color(0, 0, 0));
+        wall1.setDiffusePercent(0.5f);
         
         Rectangle wall2 = new Rectangle(
         		new Point(0,0,z_axis),
@@ -598,6 +599,7 @@ public class Main extends Application {
         		new Point(x_axis,y_axis,z_axis));
         wall3.setColor(Color.color(0, 0.5, 0));
         wall3.setSpecular(Color.color(0, 0, 0));
+        wall3.setDiffusePercent(0.5f);
         
         Rectangle wall4 = new Rectangle(
         		new Point(x_axis,0,0),
@@ -739,7 +741,8 @@ public class Main extends Application {
 	public Color trace(Ray r, int recursiveDepth) {
 		if (recursiveDepth < 0) {
 //			System.out.println("Recursive depth cut-off reached"); 
-			return Color.BLUE;
+//			return Color.BLUE;
+			return Color.BLACK;
 		} //Default colour for reaching max recursive depth
 		
 		Vector currentColor = new Vector(0,0,0);
@@ -948,12 +951,14 @@ public class Main extends Application {
 				}
 				currentColor = reflect(currentTracable,kt,r,currentColor,intersection,recursiveDepth);
 //				System.out.println("Kr: " + kr + " | Kt: " + (1-kr));
-			} else {
-				int numRays = 20;
-				float diffusePerc = 0.5f;
+				
+			//Messing with colour bleeding via diffuse reflections	
+			} else { 
+				int numRays = 10;
+				float diffusePerc = 0.35f;
 				currentColor = currentColor.multiply(1-diffusePerc);
 				for (int i=0; i<numRays; i++) {
-					currentColor = currentColor.add(diffuseReflect(currentTracable,intersection,diffusePerc/numRays,recursiveDepth-1));
+					currentColor = currentColor.add(diffuseReflect(currentTracable,currentColor,intersection,diffusePerc/numRays,recursiveDepth-1));
 				}
 			}
 			
@@ -1082,7 +1087,7 @@ public class Main extends Application {
 		return new Vector(red,green,blue);
 	}
 	
-	public Vector diffuseReflect(Tracable currentTracable, Point intersection, float rayScalar, int recursiveDepth) {
+	public Vector diffuseReflect(Tracable currentTracable, Vector currentColor, Point intersection, float rayScalar, int recursiveDepth) {
 		Vector surfaceNorm = currentTracable.getNormal(intersection);
 		float radius = 100;
 		Sphere s = new Sphere(intersection.add(new Point(surfaceNorm)),radius);
@@ -1090,9 +1095,27 @@ public class Main extends Application {
 		Vector reflectDir = new Vector(s.generateRandomUnitPoint().add(s.c()).subtract(intersection));
 		reflectDir.normalise();
 		Ray rayDiff = new Ray(intersection.add(new Point(reflectDir)), reflectDir);
-		Color col = trace(rayDiff, recursiveDepth-1);
+//		Color col = trace(rayDiff, recursiveDepth-1);
 		
-		return new Vector(col).multiply(rayScalar);
+		Tracable hitTracable = tracableObjects.get(0);
+		double t = -1;
+		for (Object o: tracableObjects) {
+			Tracable temp = (Tracable) o;
+			double tempT = temp.getIntersect(rayDiff);
+//			if (tempT > t && !Double.isNaN(tempT) && !Double.isInfinite(tempT)) {
+			if ((t < 0 && tempT > t) || (t >= 0 && tempT < t && tempT >= 0)) {
+				//System.out.println("replacing t:" + t + " with tempT:" + tempT);
+				t = tempT;
+				hitTracable = temp;
+			}
+		}
+		if (t >= 0 && hitTracable.isDiffuse()) {
+			return new Vector(hitTracable.getColor()).multiply(rayScalar);
+		} else {
+			return currentColor.multiply(rayScalar);
+		}
+		
+//		return new Vector(col).multiply(rayScalar);
 	}
 	
 	public Color traceTest(Ray r) {

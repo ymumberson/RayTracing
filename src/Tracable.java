@@ -8,6 +8,7 @@ public abstract class Tracable {
 	protected double reflectedPercent;
 	protected double refractedPercent;
 	protected double refractiveIndex = 1;
+	protected double diffusePercent;
 	
 	/**
 	 * Finds the point at which the ray intersects the object
@@ -97,9 +98,21 @@ public abstract class Tracable {
 		return refractedPercent > 0;
 	}
 	
-	public boolean isDiffuse() { //More of a -> isMatt()
-		return !isRefractive() && !isReflective();
+	public void setDiffusePercent(double diffusePercent) {
+		this.diffusePercent = diffusePercent;
 	}
+	
+	public boolean isDiffuse() {
+		return diffusePercent > 0;
+	}
+	
+	public boolean isMatt() {
+		return !(isReflective() || isRefractive() || isDiffuse());
+	}
+	
+//	public boolean isDiffuse() { //More of a -> isMatt()
+//		return !isRefractive() && !isReflective();
+//	}
 	
 	public double getRefractedPercent() {
 		return refractedPercent;
