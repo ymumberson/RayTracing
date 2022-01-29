@@ -33,7 +33,7 @@ public class Main extends Application {
     private Point camera;
     private AABB bb; //Bounding box surrounding the scene used as background (well it will be anyway)
     private int MAX_RECURSIVE_DEPTH = 4;
-    private int SAMPLES_PER_PIXEL = 2;
+    private int SAMPLES_PER_PIXEL = 3;
     private KdTree tree;
     private long startTime;
     private long lastDuration = 0;
@@ -552,7 +552,8 @@ public class Main extends Application {
 //		int rad1 = 100;
 		Sphere s1 = new Sphere(new Point(x_axis/3,y_axis-rad1,z_axis-rad1*2),rad1);
 //		Sphere s1 = new Sphere(new Point(x_axis/3,y_axis-rad1,z_axis-200),rad1);
-		s1.setColor(Color.WHITE);
+//		s1.setColor(Color.WHITE);
+		s1.setColor(Color.BLACK);
 		s1.setReflectedPercent(0.9);
 		s1.setRefractiveIndex(1.5f);
 		s1.setSpecular(Color.BLACK);
@@ -560,7 +561,8 @@ public class Main extends Application {
 		
 		int rad2 = 100;
 		Sphere s2 = new Sphere(new Point(x_axis*3/4-50,y_axis-rad2,z_axis/3-50),rad2);
-		s2.setColor(Color.WHITE);
+//		s2.setColor(Color.WHITE);
+		s2.setColor(Color.BLACK);
 		s2.setRefractedPercent(0.9);
 		s2.setRefractiveIndex(1.5f);
 		s2.setSpecular(Color.BLACK);
@@ -591,6 +593,7 @@ public class Main extends Application {
 //        wall2.setColor(Color.color(0.5, 0.2, 0));
         wall2.setColor(Color.color(0.7,0.7,0.7));
         wall2.setSpecular(Color.color(0, 0, 0));
+        wall2.setDiffusePercent(0.5f);
         
         Rectangle wall3 = new Rectangle(
         		new Point(x_axis,0,z_axis),
@@ -608,6 +611,7 @@ public class Main extends Application {
         		new Point(x_axis,y_axis,0));
         wall4.setColor(Color.color(0, 0, 0.5));
         wall4.setSpecular(Color.color(0, 0, 0));
+        wall4.setDiffusePercent(0.5f);
         
         Rectangle ceiling = new Rectangle(
         		new Point(0,0,0),
@@ -616,6 +620,7 @@ public class Main extends Application {
         		new Point(0,0,z_axis));
         ceiling.setColor(Color.color(0.7,0.7,0.7));
         ceiling.setSpecular(Color.color(0, 0, 0));
+        ceiling.setDiffusePercent(0.5f);
         
         tracableObjects.add(floor);
         tracableObjects.add(wall1);
@@ -941,7 +946,7 @@ public class Main extends Application {
 					kr = (rS * rS + rP * rP) / 2f;
 				}
 				float kt = 1-kr;
-				if (currentTracable.isRefractive()) {
+				if (currentTracable.isRefractive()) { //If refractive then swap reflectPerc and refractPerc
 					float temp = kt;
 					kt = kr;
 					kr = temp;
