@@ -140,6 +140,64 @@ public abstract class Tracable {
 	 */
 	public abstract AABB generateAABB();
 	
+	/**
+	 * Returns an int representing russian roulette outcome:
+	 * 0 = Absorption
+	 * 1 = Diffuse reflection
+	 * 2 = Specular reflection
+	 * 3 = Refraction
+	 * @param r
+	 * @param intersection
+	 * @return
+	 */
+	public int russianRoulette(Ray r, Point intersection) {
+		float rnd = (float)Math.random();
+		if (this.isDiffuse() && rnd < this.diffusePercent) {
+			return 1;
+		} else {
+			float kr = 0;
+			Vector n = this.getNormal(intersection);
+			float etat = (float)this.getRefractiveIndex();
+			
+			float cosi = (float) Math.max(-1,Math.min(1, r.d().dot(n)));
+			float etai = 1; //Refractive index of air
+			if (cosi > 0) {
+				float temp = etai;
+				etai = etat;
+				etat = temp;
+			}
+			
+			//Compute using Snell's law
+			float sint = (float) (etai / etat * Math.sqrt(Math.max(0f, 1 - cosi*cosi)));
+			
+			if (sint >= 1) { //Total internal reflection
+				kr = 1;
+			} else {
+				float cost = (float) Math.sqrt(Math.max(0f, 1 - sint*sint));
+				cosi = Math.abs(cosi);
+				float rS = (float) (((etat*cosi) - (etai*cost)) / ((etat*cosi) + (etai * cost)));
+				float rP = (float) (((etai*cosi) - (etat*cost)) / ((etai*cosi) + (etat * cost)));
+//				System.out.println(rS + " " + rP + " " + cost + " " + cosi);
+				kr = (rS * rS + rP * rP) / 2f;
+			}
+			float kt = 1-kr;
+			if (this.isRefractive()) { //If refractive then swap reflectPerc and refractPerc
+				float temp = kt;
+				kt = kr;
+				kr = temp;
+			}
+			
+			//Returns
+			if (rnd <= kt) {
+				return 2; //Specular reflection
+			} else if (rnd <= kr) {
+				return 3; //Refraction
+			}
+		}
+		
+		return 0; //Absorption
+	}
+	
 	public static void main(String[] args) {
 //		Sphere s = new Sphere(new Point(0, 0, 100), 100);
 //		s.setColor(Color.BLUE);
