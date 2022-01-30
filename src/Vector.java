@@ -75,6 +75,10 @@ public class Vector {
 		return new Vector(dx*n, dy*n, dz*n);
 	}
 	
+	public Vector divide(double n) {
+		return new Vector(dx/n,dy/n,dz/n);
+	}
+	
 	public double dx() {
 		return dx;
 	}

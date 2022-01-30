@@ -58,6 +58,6 @@ public class Photon {
 	}
 	
 	public String toString() {
-		return "{Photon: {position:'" + position + "'}}";
+		return "{Photon: {position:'" + position + "', energy:'" + energy + "'}}";
 	}
 }

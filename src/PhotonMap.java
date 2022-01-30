@@ -98,6 +98,7 @@ public class PhotonMap extends AABB {
 	private void quicksort(Photon[] ls, int splitDim, int lower, int upper) {
 		if (lower < upper) {
 			int partitionIndex = partition(ls,splitDim,lower,upper);
+//			System.out.println("lower: " + lower + ", partitionIndex: " + partitionIndex); //Debugging stack overflow
 			quicksort(ls,splitDim,lower,partitionIndex-1);
 			quicksort(ls,splitDim,partitionIndex+1,upper);
 		}
@@ -111,25 +112,48 @@ public class PhotonMap extends AABB {
 	 * @param upper
 	 * @return
 	 */
+//	private int partition(Photon[] ls, int splitDim, int lower, int upper) {
+//		double pivot = ls[upper].getSplitVal(splitDim);
+//		int i = lower-1;
+//		
+//		for (int j=lower; j<upper; j++) {
+//			if (ls[j].getSplitVal(splitDim) <= pivot) {
+//				i++;
+//				
+//				Photon temp = ls[i];
+//				ls[i] = ls[j];
+//				ls[j] = temp;
+//			}
+//		}
+//		
+//		Photon temp = ls[i+1];
+//		ls[i+1] = ls[upper];
+//		ls[upper] = temp;
+//		
+//		return i+1;
+//	}
+	
 	private int partition(Photon[] ls, int splitDim, int lower, int upper) {
-		double pivot = ls[upper].getSplitVal(splitDim);
-		int i = lower-1;
-		
-		for (int j=lower; j<upper; j++) {
-			if (ls[j].getSplitVal(splitDim) <= pivot) {
+		double x = ls[upper].getSplitVal(splitDim);
+		int i = lower;
+		int j = upper;
+		Photon temp;
+		while (i < j) {
+			while (x < ls[j].getSplitVal(splitDim)) {
+				j--;
+			}
+			while (x > ls[i].getSplitVal(splitDim)) {
 				i++;
-				
-				Photon temp = ls[i];
+			}
+			if (i < j) {
+				temp = ls[i];
 				ls[i] = ls[j];
 				ls[j] = temp;
+				j--;
+				i++;
 			}
 		}
-		
-		Photon temp = ls[i+1];
-		ls[i+1] = ls[upper];
-		ls[upper] = temp;
-		
-		return i+1;
+		return j;
 	}
 	
 	public boolean isLeaf() {
@@ -208,6 +232,23 @@ public class PhotonMap extends AABB {
 		return dist <= s.r();
 	}
 	
+	public void printMap() {
+		if (this.isLeaf()) {
+			for (Photon p: photons) {
+				System.out.println(p);
+//				Point pos = p.getPosition();
+//				if (Math.abs(pos.x() -250f) > 1) {
+//					System.out.println("Okay we found one:" + pos);
+//				}
+			}
+		} else {
+			left.printMap();
+			if (right != null) {
+				right.printMap();
+			}
+		}
+	}
+	
 	/**
 	 * Experimenting with class.
 	 * @param args
@@ -215,13 +256,14 @@ public class PhotonMap extends AABB {
 	public static void main(String[] args) {
 //		Photon p1 = new Photon(new Point(0,1,2.2), new Vector(0,0,0), new Vector(0,0,0));
 //		System.out.println(p1);
-		PhotonMap map = new PhotonMap(new Point(0,0,0), new Point(10,10,10));
+		float upper = 1000f;
+		PhotonMap map = new PhotonMap(new Point(0,0,0), new Point(upper,upper,upper));
 		int numPhotons = 1000000;
 		Photon[] arr = new Photon[numPhotons];
 		for (int i=0; i<numPhotons; i++) {
-			double x = Math.random() * 10;
-			double y = Math.random() * 10;
-			double z = Math.random() * 10;
+			double x = Math.random() * upper;
+			double y = Math.random() * upper;
+			double z = Math.random() * upper;
 			arr[i] = new Photon(new Point(x,y,z), new Vector(0,0,0), new Vector(0,0,0));
 //			System.out.println(arr[i]);
 		}
@@ -242,12 +284,12 @@ public class PhotonMap extends AABB {
 		System.out.println("Build time: " + (finish-start) + "ms");
 		System.out.println(map.getDepth());
 		
-		int numSearch = 500;
+		int numSearch = 10;
 		System.out.println("\nGetting " + numSearch + " nearest neighbours:");
-		double x = Math.random() * 10;
-		double y = Math.random() * 10;
-		double z = Math.random() * 10;
-		Sphere s = new Sphere(new Point(x,y,z),1f);
+		double x = Math.random() * upper;
+		double y = Math.random() * upper;
+		double z = Math.random() * upper;
+		Sphere s = new Sphere(new Point(x,y,z),100f);
 //		Sphere s = new Sphere(new Point(1,1,1),1);
 		System.out.println("Point centre: " + s.c());
 		start = System.currentTimeMillis();
@@ -257,8 +299,8 @@ public class PhotonMap extends AABB {
 		System.out.println("Search time: " + (finish-start) + "ms");
 		System.out.println("Size of returned list = " + ls.size());
 		System.out.println("Num photons in map = " + map.getNumPhotons());
-//		for (int i=0; i<ls.size(); i++) {
-//			System.out.println(ls.get(i));
-//		}
+		for (int i=0; i<ls.size(); i++) {
+			System.out.println(ls.get(i));
+		}
 	}
 }

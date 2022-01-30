@@ -102,6 +102,10 @@ public abstract class Tracable {
 		this.diffusePercent = diffusePercent;
 	}
 	
+	public double getDiffusePercent() {
+		return this.diffusePercent;
+	}
+	
 	public boolean isDiffuse() {
 		return diffusePercent > 0;
 	}
@@ -152,9 +156,14 @@ public abstract class Tracable {
 	 */
 	public int russianRoulette(Ray r, Point intersection) {
 		float rnd = (float)Math.random();
-		if (this.isDiffuse() && rnd < this.diffusePercent) {
-			return 1;
+		if (this.isDiffuse()) {
+//			System.out.println(rnd + " < " + this.diffusePercent);
+			if (rnd < this.diffusePercent) {
+				return 1;
+			}
+			return 0;
 		} else {
+//			System.out.println(rnd + " !< " + this.diffusePercent);
 			float kr = 0;
 			Vector n = this.getNormal(intersection);
 			float etat = (float)this.getRefractiveIndex();
@@ -187,10 +196,11 @@ public abstract class Tracable {
 				kr = temp;
 			}
 			
+			float absorptionChance = 0.2f;
 			//Returns
-			if (rnd <= kt) {
+			if (rnd <= kt-absorptionChance) {
 				return 2; //Specular reflection
-			} else if (rnd <= kr) {
+			} else if (rnd <= kr-absorptionChance) {
 				return 3; //Refraction
 			}
 		}
