@@ -37,9 +37,13 @@ public class Triangle extends Tracable {
 		Vector pvec = r.d().cross(edge2);
 		double det = edge1.dot(pvec);
 		
-		if (Math.abs(det) < EPSILON) {
-			return -1;
-		}
+		//With culling
+		if (det > EPSILON) {return -1;}
+		
+//		//Without culling
+//		if (Math.abs(det) < EPSILON) {
+//			return -1;
+//		}
 		
 		double invDet = (1.0/det);
 		

@@ -15,8 +15,8 @@ import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 
 public class PhotonMapper extends Application {
-	private int x_axis = 750; private int y_axis = 800; private int z_axis = 750; //For actual scene
-//	private int x_axis = 750/3; private int y_axis = 800/3; private int z_axis = 750/3; //For mini scene
+//	private int x_axis = 750; private int y_axis = 800; private int z_axis = 750; //For actual scene
+	private int x_axis = 750/3; private int y_axis = 800/3; private int z_axis = 750/3; //For mini scene
 	
 	
 	
@@ -80,7 +80,7 @@ public class PhotonMapper extends Application {
 		}
 		
 		startTimer("Building photon maps");
-		buildGlobalPhotonMap(1000000);
+		buildGlobalPhotonMap(100000);
 		finishTimer();
 		
 		startTimer("Rendering Scene.");
@@ -91,8 +91,8 @@ public class PhotonMapper extends Application {
 	}
 	
 	public void initialiseActualScene() {
-//		int rad1 = 150/3; //For mini
-		int rad1 = 150; //For normal
+		int rad1 = 150/3; //For mini
+//		int rad1 = 150; //For normal
 		Sphere s1 = new Sphere(new Point(x_axis/3,y_axis-rad1,z_axis-rad1*2),rad1);
 //		Sphere s1 = new Sphere(new Point(x_axis/3,y_axis-rad1,z_axis-200),rad1);
 		s1.setColor(Color.WHITE);
@@ -101,10 +101,10 @@ public class PhotonMapper extends Application {
 		s1.setSpecular(Color.BLACK);
 		tracableObjects.add(s1);
 		
-		int rad2 = 100; //For normal
-//		int rad2 = 100/3; //for mini
-		int padding = 50; //for normal
-//		int padding = 0; //for mini
+//		int rad2 = 100; //For normal
+		int rad2 = 100/3; //for mini
+//		int padding = 50; //for normal
+		int padding = 0; //for mini
 		Sphere s2 = new Sphere(new Point(x_axis*3/4-padding,y_axis-rad2,z_axis/3-padding),rad2);
 		s2.setColor(Color.WHITE);
 		s2.setRefractedPercent(0.9);
@@ -153,7 +153,7 @@ public class PhotonMapper extends Application {
         		new Point(0,0,0),
         		new Point(0,y_axis,0),
         		new Point(x_axis,y_axis,0));
-        wall4.setColor(Color.color(0, 0, 0.5));
+        wall4.setColor(Color.color(0.7, 0.7, 0.7));
         wall4.setSpecular(Color.color(0, 0, 0));
         wall4.setDiffusePercent(0.5f);
         
@@ -170,7 +170,7 @@ public class PhotonMapper extends Application {
         tracableObjects.add(wall1);
         tracableObjects.add(wall2);
         tracableObjects.add(wall3);
-//        tracableObjects.add(wall4);
+        tracableObjects.add(wall4);
         tracableObjects.add(ceiling);
 	}
 	
@@ -423,10 +423,11 @@ public class PhotonMapper extends Application {
 				currentColor = currentColor.divide(length);
 			}
 			
-			double mattPerc = currentTracable.getMattPercent();
-			if (mattPerc == 1) {mattPerc = currentTracable.getDiffusePercent();}
-			Vector mattCol = new Vector(currentTracable.getColor()).multiply(mattPerc);
-			currentColor = currentColor.multiply(1-mattPerc).add(mattCol);
+			//Giving objects some of their own color instead of direct visualisation of global photon map
+//			double mattPerc = currentTracable.getMattPercent();
+//			if (mattPerc == 1) {mattPerc = currentTracable.getDiffusePercent();}
+//			Vector mattCol = new Vector(currentTracable.getColor()).multiply(mattPerc);
+//			currentColor = currentColor.multiply(1-mattPerc).add(mattCol);
 			
 //			currentColor = currentColor.divide(2).add(new Vector(currentTracable.getColor()).divide(2));
 //			System.out.println(currentColor);
