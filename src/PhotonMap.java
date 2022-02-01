@@ -24,6 +24,7 @@ public class PhotonMap extends AABB {
 	
 	public void build(Photon[] ls, int MAX_DEPTH, int MAX_OBJECTS, int depth) {
 		if (depth >= MAX_DEPTH || ls.length <= MAX_OBJECTS) { //If at max depth, make this a leaf node
+//			System.out.println("Creating leaf: " + ls.length + " elements.");
 			this.photons = ls;
 			this.isLeaf = true;
 			return;
@@ -35,50 +36,61 @@ public class PhotonMap extends AABB {
 		//Sort list according to split plane
 		quicksort(ls,splitDim,0,ls.length-1);
 		
+		double median = ls[(ls.length)/2-1].getSplitVal(splitDim); //Currently median goes in left list but I might need to change that.
+//		System.out.println("Median: " + median + ", splitDim: " + splitDim);
+		splitPlane(splitDim,median);
 		//Create split plane and the left and right tree
-		splitPlane(splitDim);
+//		splitPlane(splitDim);
 		
 		//Create left and right list
 		ArrayList<Photon> lsLeft = new ArrayList<Photon>();
 		ArrayList<Photon> lsRight = new ArrayList<Photon>();
-		double median = ls[(ls.length-1)/2].getSplitVal(splitDim); //Currently median goes in left list but I might need to change that.
+//		double median = ls[(ls.length)/2-1].getSplitVal(splitDim); //Currently median goes in left list but I might need to change that.
+//		System.out.println("Median: " + median + ", splitDim: " + splitDim);
 		for (Photon p: ls) {
+//			System.out.println(p);
 			//Assign p to either left list or right list, median goes to left list
 			if (p.getSplitVal(splitDim) <= median) {
+//				System.out.println("Adding to left");
 				lsLeft.add(p);
 			} else {
+//				System.out.println("Adding to right");
 				lsRight.add(p);
 			}
 		}
 		
 		//Build left and right subtrees
 		left.build(lsLeft.toArray(new Photon[lsLeft.size()]), MAX_DEPTH, MAX_OBJECTS,depth+1);
-		if (lsRight.isEmpty()) { //Right list could be empty, so set to null if empty to avoid computation
-			right = null;
-		} else {
-			right.build(lsRight.toArray(new Photon[lsRight.size()]), MAX_DEPTH, MAX_OBJECTS,depth+1);
-		}
-//		right.build(lsRight.toArray(new Photon[lsRight.size()]), MAX_DEPTH, MAX_OBJECTS,depth+1);
+//		if (lsRight.isEmpty()) { //Right list could be empty, so set to null if empty to avoid computation
+//			right = null;
+//		} else {
+//			right.build(lsRight.toArray(new Photon[lsRight.size()]), MAX_DEPTH, MAX_OBJECTS,depth+1);
+//		}
+		right.build(lsRight.toArray(new Photon[lsRight.size()]), MAX_DEPTH, MAX_OBJECTS,depth+1);
 	}
 	
-	private void splitPlane(int splitDim) {
+	
+	private void splitPlane(int splitDim, double median) {
 		//For storing points for split
 				Point minSplitPoint;
 				Point maxSplitPoint;
 				
 				switch (splitDim) {
 				case 1: //Splitting in y plane
-					double newY = (min.y() + max.y())/2f;
+//					double newY = (min.y() + max.y())/2f;
+					double newY = median;
 					minSplitPoint = new Point(max.x(),newY,max.z());
 					maxSplitPoint = new Point(min.x(),newY,min.z());
 					break;
 				case 2: //Splitting in z plane
-					double newZ = (min.z() + max.z())/2f;
+//					double newZ = (min.z() + max.z())/2f;
+					double newZ = median;
 					minSplitPoint = new Point(max.x(),max.y(),newZ);
 					maxSplitPoint = new Point(min.x(),min.y(),newZ);
 					break;
 				default: //Splitting in x plane
-					double newX = (min.x() + max.x())/2f;
+//					double newX = (min.x() + max.x())/2f;
+					double newX = median;
 					minSplitPoint = new Point(newX,max.y(),max.z());
 					maxSplitPoint = new Point(newX,min.y(),min.z());
 				}
@@ -204,8 +216,11 @@ public class PhotonMap extends AABB {
 			if (left.intersects(s)) {
 				left.getNearestNeighbours(s,neighbours,N);
 			}
-			if (right != null && right.intersects(s)) {
-				right.getNearestNeighbours(s,neighbours,N);
+//			if (right != null && right.intersects(s)) {
+//				right.getNearestNeighbours(s,neighbours,N);
+//			}
+			if (right.intersects(s)) {
+				right.getNearestNeighbours(s, neighbours, N);
 			}
 		}
 	}
@@ -225,7 +240,8 @@ public class PhotonMap extends AABB {
 		double y = Math.max(min.y(), Math.min(c.y(), max.y()));
 		double z = Math.max(min.z(), Math.min(c.z(), max.z()));
 		
-		double dist = Math.sqrt(Math.pow((x - c.x()), 2)
+		double dist = Math.sqrt(
+				  Math.pow((x - c.x()), 2)
 				+ Math.pow((y - c.y()), 2)
 				+ Math.pow((z - c.z()), 2));
 		
@@ -254,51 +270,70 @@ public class PhotonMap extends AABB {
 	 * @param args
 	 */
 	public static void main(String[] args) {
-//		Photon p1 = new Photon(new Point(0,1,2.2), new Vector(0,0,0), new Vector(0,0,0));
-//		System.out.println(p1);
-		float upper = 1000f;
-		PhotonMap map = new PhotonMap(new Point(0,0,0), new Point(upper,upper,upper));
-		int numPhotons = 1000000;
-		Photon[] arr = new Photon[numPhotons];
-		for (int i=0; i<numPhotons; i++) {
-			double x = Math.random() * upper;
-			double y = Math.random() * upper;
-			double z = Math.random() * upper;
-			arr[i] = new Photon(new Point(x,y,z), new Vector(0,0,0), new Vector(0,0,0));
-//			System.out.println(arr[i]);
-		}
-		
-//		System.out.println("Quicksort:");
-//		map.quicksort(arr,2,0,numPhotons-1);
-//		for (Photon p: arr) {
-//			System.out.println(p);
+////		Photon p1 = new Photon(new Point(0,1,2.2), new Vector(0,0,0), new Vector(0,0,0));
+////		System.out.println(p1);
+//		float upper = 1000f;
+//		PhotonMap map = new PhotonMap(new Point(0,0,0), new Point(upper,upper,upper));
+//		int numPhotons = 1000000;
+//		Photon[] arr = new Photon[numPhotons];
+//		for (int i=0; i<numPhotons; i++) {
+//			double x = Math.random() * upper;
+//			double y = Math.random() * upper;
+//			double z = Math.random() * upper;
+//			arr[i] = new Photon(new Point(x,y,z), new Vector(0,0,0), new Vector(0,0,0));
+////			System.out.println(arr[i]);
 //		}
-		
-		/*
-		 * Building a photon map with 1,000,000 photons takes 3184ms
-		 */
-		System.out.println("Building photon map: " + numPhotons + " elements.");
-		long start = System.currentTimeMillis();
-		map.build(arr, 20, 1);
-		long finish = System.currentTimeMillis();
-		System.out.println("Build time: " + (finish-start) + "ms");
-		System.out.println(map.getDepth());
-		
-		int numSearch = 10;
-		System.out.println("\nGetting " + numSearch + " nearest neighbours:");
-		double x = Math.random() * upper;
-		double y = Math.random() * upper;
-		double z = Math.random() * upper;
-		Sphere s = new Sphere(new Point(x,y,z),100f);
-//		Sphere s = new Sphere(new Point(1,1,1),1);
-		System.out.println("Point centre: " + s.c());
-		start = System.currentTimeMillis();
+//		
+////		System.out.println("Quicksort:");
+////		map.quicksort(arr,2,0,numPhotons-1);
+////		for (Photon p: arr) {
+////			System.out.println(p);
+////		}
+//		
+//		/*
+//		 * Building a photon map with 1,000,000 photons takes 3184ms
+//		 */
+//		System.out.println("Building photon map: " + numPhotons + " elements.");
+//		long start = System.currentTimeMillis();
+//		map.build(arr, 20, 1);
+//		long finish = System.currentTimeMillis();
+//		System.out.println("Build time: " + (finish-start) + "ms");
+//		System.out.println(map.getDepth());
+//		
+//		int numSearch = 10;
+//		System.out.println("\nGetting " + numSearch + " nearest neighbours:");
+//		double x = Math.random() * upper;
+//		double y = Math.random() * upper;
+//		double z = Math.random() * upper;
+//		Sphere s = new Sphere(new Point(x,y,z),100f);
+////		Sphere s = new Sphere(new Point(1,1,1),1);
+//		System.out.println("Point centre: " + s.c());
+//		start = System.currentTimeMillis();
+//		ArrayList<Photon> ls = new ArrayList<Photon>();
+//		map.getNearestNeighbours(s, ls, numSearch);
+//		finish = System.currentTimeMillis();
+//		System.out.println("Search time: " + (finish-start) + "ms");
+//		System.out.println("Size of returned list = " + ls.size());
+//		System.out.println("Num photons in map = " + map.getNumPhotons());
+//		for (int i=0; i<ls.size(); i++) {
+//			System.out.println(ls.get(i));
+//		}
+		testOutOfBounds();
+	}
+	
+	/*
+	 * Out of bounds seems to work???? SO WHAT'S THE PROBLEM?!
+	 */
+	public static void testOutOfBounds() {
+		PhotonMap map = new PhotonMap(new Point(0,0,0), new Point(10,10,10));
+		Photon[] ps = new Photon[2];
+		ps[0] = new Photon(new Point(0,-0.0000000001,0),new Vector(0,0,0), new Vector(0,0,0));
+		ps[1] = new Photon(new Point(5,5,10.000000001),new Vector(0,0,0), new Vector(0,0,0));
+		map.build(ps, 10, 1);
 		ArrayList<Photon> ls = new ArrayList<Photon>();
-		map.getNearestNeighbours(s, ls, numSearch);
-		finish = System.currentTimeMillis();
-		System.out.println("Search time: " + (finish-start) + "ms");
-		System.out.println("Size of returned list = " + ls.size());
-		System.out.println("Num photons in map = " + map.getNumPhotons());
+		Sphere s = new Sphere(new Point(0,0,0),1);
+		map.getNearestNeighbours(s, ls, 10);
+		System.out.println(ls.size());
 		for (int i=0; i<ls.size(); i++) {
 			System.out.println(ls.get(i));
 		}
