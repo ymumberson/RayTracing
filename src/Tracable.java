@@ -159,9 +159,9 @@ public abstract class Tracable {
 		if (this.isDiffuse()) {
 //			System.out.println(rnd + " < " + this.diffusePercent);
 			if (rnd < this.diffusePercent) {
-				return 1;
+				return 1; //Diffuse reflection
 			}
-			return 0;
+			return 0; //Absorbed
 		} else {
 //			System.out.println(rnd + " !< " + this.diffusePercent);
 			float kr = 0;
