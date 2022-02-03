@@ -1,4 +1,6 @@
-
+/*
+ * Code adapted from: https://www.geeksforgeeks.org/max-heap-in-java/
+ */
 public class PhotonMaxHeap {
 	private Photon[] photons;
 	private double[] distances;
@@ -6,10 +8,10 @@ public class PhotonMaxHeap {
 	private int maxsize;
 	
 	public PhotonMaxHeap(int maxsize) {
-		this.maxsize = maxsize;
+		this.maxsize = maxsize+1;
 		this.size = 0;
-		this.photons = new Photon[maxsize];
-		this.distances = new double[maxsize];
+		this.photons = new Photon[maxsize+1];
+		this.distances = new double[maxsize+1];
 	}
 	
 	private int parent(int i) {
@@ -25,7 +27,7 @@ public class PhotonMaxHeap {
 	}
 	
 	private boolean isLeaf(int i) {
-		if (i > size/2 && i <= size) {
+		if (i > size/2-1 && i < size) {
 			return true;
 		}
 		return false;
@@ -44,18 +46,28 @@ public class PhotonMaxHeap {
 	public void maxHeapify(int i) {
 		if (isLeaf(i)) return; //if leaf then return
 		
+		int right = right(i);
+		int left = left(i);
+		
 		//if smaller than either child
-		if (distances[i] < distances[left(i)]
-				|| distances[i] < distances[right(i)]) {
-			
-			if (distances[left(i)] > distances[right(i)]) {
-				swap(i, left(i));
-				maxHeapify(left(i));
-			} else {
-				swap(i, right(i));
-				maxHeapify(right(i));
+		if (right < size) { //if has right
+			if (distances[i] < distances[left]
+					|| distances[i] < distances[right]) {
+				
+				if (distances[left] > distances[right]) {
+					swap(i, left);
+					maxHeapify(left);
+				} else {
+					swap(i, right);
+					maxHeapify(right);
+				}
+			}
+		} else {
+			if (distances[i] < distances[left]) {
+				swap(i,left);
 			}
 		}
+		
 	}
 	
 	public Photon getMaxPhoton() {
@@ -76,17 +88,26 @@ public class PhotonMaxHeap {
 	}
 	
 	public void insert(Photon p, double d) {
-		if (size == maxsize) return; //don't add if heap is full
-		
-		photons[size] = p;
-		distances[size] = d;
-		
-		int current = size;
-		while (distances[current] > distances[parent(current)]) {
-			swap(current, parent(current));
-			current = parent(current);
+		if (size < maxsize) {
+			photons[size] = p;
+			distances[size] = d;
+			
+			int current = size;
+			while (distances[current] > distances[parent(current)]) {
+				swap(current, parent(current));
+				current = parent(current);
+			}
+			size++;	
+		} else {
+			photons[0] = p;
+			distances[0] = d;
+			maxHeapify(0);
 		}
-		size++;
+	}
+	
+	//Could return a smaller list than maxsize
+	public Photon[] getPhotons() {
+		return photons;
 	}
 	
 	public static void main(String[] args) {

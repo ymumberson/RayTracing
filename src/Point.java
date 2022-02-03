@@ -162,10 +162,22 @@ public class Point {
 		return x==p.x() && y==p.y() && z==p.z();
 	}
 	
+	public double euclideanDistance(Point p2) {
+		return Math.sqrt(Math.pow(this.x-p2.x,2)+Math.pow(this.y-p2.y,2)+Math.pow(this.z-p2.z,2));
+	}
+	
 	/**
 	 * Converts Point object to a string for readable output
 	 */
 	public String toString() {
 		return "(" + this.x + "," + this.y + "," + this.z + ")";
 	}
+	
+	public static void main(String[] args) {
+		Point p1 = new Point(1,1,1);
+		Point p2 = new Point(10,10,10);
+		System.out.println(p1.euclideanDistance(p2));
+		System.out.println(p2.euclideanDistance(p1));
+	}
 }
+

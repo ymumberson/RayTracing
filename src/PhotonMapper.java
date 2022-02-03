@@ -34,8 +34,8 @@ public class PhotonMapper extends Application {
     private boolean USING_KD_TREES = false;
     private static int numMisses,numDiffuse,numSpecular,numRefract,numAbsorbed,numAdded;
     private float PHOTON_SEARCH_RADIUS = 10;
-    private int NUM_PHOTONS_SEARCHING_FOR = 1000;
-    private boolean USING_MINI_SCENE = false;
+    private int NUM_PHOTONS_SEARCHING_FOR = 500;
+    private boolean USING_MINI_SCENE = true;
     
     private ArrayList<Photon> globalPhotons = new ArrayList<Photon>();
     private PhotonMap globalMap;
@@ -122,7 +122,7 @@ public class PhotonMapper extends Application {
 //		}
 		
 		startTimer("Building photon maps");
-		buildGlobalPhotonMap(1000000);
+		buildGlobalPhotonMap(20000);
 //		buildGlobalPhotonMap(30000);
 //		buildRandomGlobalPhotonMap(1000);
 		finishTimer();
@@ -270,7 +270,8 @@ public class PhotonMapper extends Application {
 	public void buildGlobalPhotonMap(int numPhotons) {
 		Sphere s = new Sphere(new Point(x_axis/2,y_axis/2,z_axis/2),x_axis); //Just for generating random points, should probs use a static method instead
 //		double pow = 1f/numPhotons; //Assuming white light (1,1,1)
-		double pow = 1;
+//		double pow = 1;
+		double pow = 5;
 		for (int i=0; i<numPhotons; i++) {
 			Vector dir = s.generateRandomUnitVector();
 			dir.normalise();
@@ -496,7 +497,7 @@ public class PhotonMapper extends Application {
 //            		image_writer.setColor(i, j, testTrace(r,MAX_RECURSIVE_DEPTH)); //For photon mapping stuff (Direct visualisation)
         		}
         	}
-//        	System.out.println("Row " + (j+1) + "/" + h + " completed!");
+        	System.out.println("Row " + (j+1) + "/" + h + " completed!");
         }
 	}
 	
@@ -743,52 +744,71 @@ public class PhotonMapper extends Application {
 				
 			//Messing with colour bleeding via diffuse reflections	
 			} else { 
-//				int numRays = 10;
-//				float diffusePerc = 0.35f;
-//				currentColor = currentColor.multiply(1-diffusePerc);
-//				for (int i=0; i<numRays; i++) {
-//					currentColor = currentColor.add(diffuseReflect(currentTracable,currentColor,intersection,diffusePerc/numRays,recursiveDepth-1));
-//				}
+				PhotonMaxHeap heap = new PhotonMaxHeap(NUM_PHOTONS_SEARCHING_FOR);
+				for (int i=0; i<NUM_PHOTONS_SEARCHING_FOR; i++) {
+					Photon p = globalPhotons.get(i);
+					heap.insert(p, intersection.euclideanDistance(p.getPosition()));
+				}
 				
-				ArrayList<Photon> nearestNeighbours = new ArrayList<Photon>();
-				Sphere s = new Sphere(intersection,PHOTON_SEARCH_RADIUS);
-				globalMap.getNearestNeighbours(s, nearestNeighbours, NUM_PHOTONS_SEARCHING_FOR);
-				int length = nearestNeighbours.size();
-//				System.out.println(length);
+				for (int i=NUM_PHOTONS_SEARCHING_FOR-1; i<globalPhotons.size(); i++) {
+					Photon p = globalPhotons.get(i);
+					double distance = intersection.euclideanDistance(p.getPosition());
+					if (distance < heap.getMaxDistance()) {
+						heap.insert(p, distance);
+					}
+				}
+				
+				Photon[] ls = heap.getPhotons();
+//				System.out.println(heap);
 				Vector temp = new Vector(0,0,0);
-				System.out.println("Length: " + length);
-//				Vector norm = currentTracable.getNormal(intersection);
-				for (int i=0; i<length; i++) {
-//					Photon p = nearestNeighbours.get(i);
-//					if (p.getIncidentDirection().multiply(-1).dot(norm) >= 0) { //If within 90 degrees of surface normal
-//						Vector energy = nearestNeighbours.get(i).getEnergy();
-//						temp = temp.add(energy);
-//					} else {
-//						length--; //ignoring photon so numPhotons is smaller
-//					}
-					
-					Vector energy = nearestNeighbours.get(i).getEnergy();
-					
-//					System.out.println(energy);
-//					currentColor = currentColor.add(energy);
-//					temp = temp.add(energy.divide(length));
-					
-					temp = temp.add(energy);
+				for (Photon p: ls) {
+					temp = temp.add(p.getEnergy());
 				}
-				if (length > 0) {
-//					currentColor = temp;
-					
-//					currentColor = temp.divide(Math.PI * PHOTON_SEARCH_RADIUS*PHOTON_SEARCH_RADIUS);
-					
-					Vector vec = temp.divide(Math.PI * PHOTON_SEARCH_RADIUS*PHOTON_SEARCH_RADIUS);
-//					currentColor = vec.multiply(new Vector(currentTracable.getColor())).add(vec);
-					currentColor = vec.multiply(new Vector(currentTracable.getColor()));
-					
-//					currentColor = temp;
-//					float diffusePerc = 0.35f;
-//					currentColor = currentColor.multiply(1-diffusePerc).add(temp.multiply(diffusePerc));
-//					currentColor = temp.multiply(new Vector(currentTracable.getColor()));
-				}
+//				System.out.println(temp);
+				double maxDist = heap.getMaxDistance();
+				Vector vec = temp.divide(Math.PI * maxDist*maxDist);
+//				currentColor = vec.multiply(new Vector(currentTracable.getColor())).add(vec);
+				currentColor = vec.multiply(new Vector(currentTracable.getColor()));
+				
+//				ArrayList<Photon> nearestNeighbours = new ArrayList<Photon>();
+//				Sphere s = new Sphere(intersection,PHOTON_SEARCH_RADIUS);
+//				globalMap.getNearestNeighbours(s, nearestNeighbours, NUM_PHOTONS_SEARCHING_FOR);
+//				int length = nearestNeighbours.size();
+////				System.out.println(length);
+//				Vector temp = new Vector(0,0,0);
+////				System.out.println("Length: " + length);
+////				Vector norm = currentTracable.getNormal(intersection);
+//				for (int i=0; i<length; i++) {
+////					Photon p = nearestNeighbours.get(i);
+////					if (p.getIncidentDirection().multiply(-1).dot(norm) >= 0) { //If within 90 degrees of surface normal
+////						Vector energy = nearestNeighbours.get(i).getEnergy();
+////						temp = temp.add(energy);
+////					} else {
+////						length--; //ignoring photon so numPhotons is smaller
+////					}
+//					
+//					Vector energy = nearestNeighbours.get(i).getEnergy();
+//					
+////					System.out.println(energy);
+////					currentColor = currentColor.add(energy);
+////					temp = temp.add(energy.divide(length));
+//					
+//					temp = temp.add(energy);
+//				}
+//				if (length > 0) {
+////					currentColor = temp;
+//					
+////					currentColor = temp.divide(Math.PI * PHOTON_SEARCH_RADIUS*PHOTON_SEARCH_RADIUS);
+//					
+//					Vector vec = temp.divide(Math.PI * PHOTON_SEARCH_RADIUS*PHOTON_SEARCH_RADIUS);
+////					currentColor = vec.multiply(new Vector(currentTracable.getColor())).add(vec);
+//					currentColor = vec.multiply(new Vector(currentTracable.getColor()));
+//					
+////					currentColor = temp;
+////					float diffusePerc = 0.35f;
+////					currentColor = currentColor.multiply(1-diffusePerc).add(temp.multiply(diffusePerc));
+////					currentColor = temp.multiply(new Vector(currentTracable.getColor()));
+//				}
 			}
 			
 			
