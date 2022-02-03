@@ -33,7 +33,7 @@ public class Main extends Application {
     private Point camera;
     private AABB bb; //Bounding box surrounding the scene used as background (well it will be anyway)
     private int MAX_RECURSIVE_DEPTH = 4;
-    private int SAMPLES_PER_PIXEL = 3;
+    private int SAMPLES_PER_PIXEL = 1;
     private KdTree tree;
     private long startTime;
     private long lastDuration = 0;
@@ -626,7 +626,7 @@ public class Main extends Application {
         tracableObjects.add(wall1);
         tracableObjects.add(wall2);
         tracableObjects.add(wall3);
-//        tracableObjects.add(wall4);
+        tracableObjects.add(wall4);
         tracableObjects.add(ceiling);
 	}
 	
@@ -642,8 +642,8 @@ public class Main extends Application {
         PixelWriter image_writer = img.getPixelWriter();
         
 //        light = new Point(lightX,0,0);
-        light = new Point(lightX,y_axis/3,-10);
-//        light = new Point(lightX,y_axis/2,z_axis/2);
+//        light = new Point(lightX,y_axis/3,-10);
+        light = new Point(lightX,y_axis/3,z_axis/2);
         camera = new Point(w/2.0f,h/2.0f,-1000f);
         
         //For test camera model//
@@ -959,12 +959,12 @@ public class Main extends Application {
 				
 			//Messing with colour bleeding via diffuse reflections	
 			} else { 
-				int numRays = 10;
-				float diffusePerc = 0.35f;
-				currentColor = currentColor.multiply(1-diffusePerc);
-				for (int i=0; i<numRays; i++) {
-					currentColor = currentColor.add(diffuseReflect(currentTracable,currentColor,intersection,diffusePerc/numRays,recursiveDepth-1));
-				}
+//				int numRays = 10;
+//				float diffusePerc = 0.35f;
+//				currentColor = currentColor.multiply(1-diffusePerc);
+//				for (int i=0; i<numRays; i++) {
+//					currentColor = currentColor.add(diffuseReflect(currentTracable,currentColor,intersection,diffusePerc/numRays,recursiveDepth-1));
+//				}
 			}
 			
 			

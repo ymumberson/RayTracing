@@ -117,11 +117,22 @@ public class Vector {
 //		Vector v2 = new Vector(-1,1,0);
 //		System.out.println(v1.cross(v2));
 		
-		Vector n = new Vector(0,0,-1);
-		Vector l = new Vector(-1,0,1);
-		//Vector r = n.multiply(n.dot(l)*2).subtract(l);
-		Vector r = l.subtract(n.multiply(2*l.dot(n)));
-		System.out.println(r);
+//		Vector n = new Vector(0,0,-1);
+//		Vector l = new Vector(-1,0,1);
+//		//Vector r = n.multiply(n.dot(l)*2).subtract(l);
+//		Vector r = l.subtract(n.multiply(2*l.dot(n)));
+//		System.out.println(r);
+		
+		Vector v1 = new Vector(0,1,0);
+		Vector v2 = new Vector(0,0,1);
+		Vector v3 = new Vector(1,0,0);
+		Vector v4 = new Vector(0.5,0.5,0);
+		Vector v5 = new Vector(-0.5,-0.5,0);
+		System.out.println(v1.dot(v2));
+		System.out.println(v1.dot(v3));
+		System.out.println(v1.dot(v4));
+		System.out.println(v1.dot(v5));
+		
 		
 	}
 }

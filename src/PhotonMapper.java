@@ -123,6 +123,7 @@ public class PhotonMapper extends Application {
 		
 		startTimer("Building photon maps");
 		buildGlobalPhotonMap(1000000);
+//		buildGlobalPhotonMap(30000);
 //		buildRandomGlobalPhotonMap(1000);
 		finishTimer();
 //		
@@ -246,9 +247,9 @@ public class PhotonMapper extends Application {
 			double x = Math.random() * x_axis;
 //			double x=0;
 			double y = Math.random() * y_axis;
-//			double z = Math.random() * z_axis;
+			double z = Math.random() * z_axis;
 //			double z = 250;
-			double z = z_axis;
+//			double z = z_axis;
 			arr[i] = new Photon(new Point(x,y,z), new Vector(0,0,0), new Vector(Math.random(),Math.random(),Math.random()));
 //			System.out.println(arr[i]);
 		}
@@ -755,18 +756,34 @@ public class PhotonMapper extends Application {
 				int length = nearestNeighbours.size();
 //				System.out.println(length);
 				Vector temp = new Vector(0,0,0);
+				System.out.println("Length: " + length);
+//				Vector norm = currentTracable.getNormal(intersection);
 				for (int i=0; i<length; i++) {
+//					Photon p = nearestNeighbours.get(i);
+//					if (p.getIncidentDirection().multiply(-1).dot(norm) >= 0) { //If within 90 degrees of surface normal
+//						Vector energy = nearestNeighbours.get(i).getEnergy();
+//						temp = temp.add(energy);
+//					} else {
+//						length--; //ignoring photon so numPhotons is smaller
+//					}
+					
 					Vector energy = nearestNeighbours.get(i).getEnergy();
+					
 //					System.out.println(energy);
 //					currentColor = currentColor.add(energy);
 //					temp = temp.add(energy.divide(length));
+					
 					temp = temp.add(energy);
 				}
 				if (length > 0) {
+//					currentColor = temp;
+					
 //					currentColor = temp.divide(Math.PI * PHOTON_SEARCH_RADIUS*PHOTON_SEARCH_RADIUS);
+					
 					Vector vec = temp.divide(Math.PI * PHOTON_SEARCH_RADIUS*PHOTON_SEARCH_RADIUS);
 //					currentColor = vec.multiply(new Vector(currentTracable.getColor())).add(vec);
 					currentColor = vec.multiply(new Vector(currentTracable.getColor()));
+					
 //					currentColor = temp;
 //					float diffusePerc = 0.35f;
 //					currentColor = currentColor.multiply(1-diffusePerc).add(temp.multiply(diffusePerc));
@@ -958,6 +975,7 @@ public class PhotonMapper extends Application {
 	public Vector calculateDiffuseDir(Tracable currentTracable, Ray r, Point intersection) {
 		Vector surfaceNorm = currentTracable.getNormal(intersection);
 		float radius = 100;
+//		float radius = y_axis;
 		Sphere s = new Sphere(intersection.add(new Point(surfaceNorm)),radius);
 		
 		Vector reflectDir = new Vector(s.generateRandomUnitPoint().add(s.c()).subtract(intersection));
