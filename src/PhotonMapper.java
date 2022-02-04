@@ -35,7 +35,9 @@ public class PhotonMapper extends Application {
     private static int numMisses,numDiffuse,numSpecular,numRefract,numAbsorbed,numAdded;
     private float PHOTON_SEARCH_RADIUS = 10;
     private int NUM_PHOTONS_SEARCHING_FOR = 500;
-    private boolean USING_MINI_SCENE = true;
+    private boolean USING_MINI_SCENE = false;
+    private float LIGHT_AMOUNT = 150000f;
+    private int LARGE_SCENE_LIGHT_SCALAR = 5;
     
     private ArrayList<Photon> globalPhotons = new ArrayList<Photon>();
     private PhotonMap globalMap;
@@ -122,8 +124,8 @@ public class PhotonMapper extends Application {
 //		}
 		
 		startTimer("Building photon maps");
-		buildGlobalPhotonMap(20000);
-//		buildGlobalPhotonMap(30000);
+//		buildGlobalPhotonMap(100000);
+		buildGlobalPhotonMap(30000);
 //		buildRandomGlobalPhotonMap(1000);
 		finishTimer();
 //		
@@ -271,7 +273,13 @@ public class PhotonMapper extends Application {
 		Sphere s = new Sphere(new Point(x_axis/2,y_axis/2,z_axis/2),x_axis); //Just for generating random points, should probs use a static method instead
 //		double pow = 1f/numPhotons; //Assuming white light (1,1,1)
 //		double pow = 1;
-		double pow = 5;
+//		double pow = 5;
+		double pow = 1; //default
+		if (USING_MINI_SCENE) {
+			pow = LIGHT_AMOUNT/numPhotons;
+		} else {
+			pow = (LIGHT_AMOUNT/numPhotons) * LARGE_SCENE_LIGHT_SCALAR; //Because normal scene is 3x bigger
+		}
 		for (int i=0; i<numPhotons; i++) {
 			Vector dir = s.generateRandomUnitVector();
 			dir.normalise();
@@ -419,8 +427,8 @@ public class PhotonMapper extends Application {
 					absorbed = true;
 //					System.out.println("Absorbed ->");
 					if (hitTracable.isDiffuse()) {
-//						Photon p = new Photon(intersection,r.d(),new Vector(hitTracable.getColor()));
-						Photon p = new Photon(intersection,r.d(),rayPower);
+//						Photon p = new Photon(intersection,r.d(),rayPower);
+						Photon p = new Photon(intersection,hitTracable.getNormal(intersection),rayPower);
 						globalPhotons.add(p);
 						numAdded++;
 //						System.out.println(" -> stored: " + p);
@@ -435,7 +443,8 @@ public class PhotonMapper extends Application {
 				
 //				Photon p = new Photon(new Point(Math.random()*x_axis, Math.random()*y_axis,Math.random()*z_axis),r.d(),rayPower);
 //				System.out.println(p);
-				Photon p = new Photon(intersection,r.d(),rayPower);
+//				Photon p = new Photon(intersection,r.d(),rayPower);
+				Photon p = new Photon(intersection,hitTracable.getNormal(intersection),rayPower);
 //				System.out.println("Stored at collision: " + p);
 				globalPhotons.add(p);
 				numAdded++;
@@ -750,19 +759,23 @@ public class PhotonMapper extends Application {
 					heap.insert(p, intersection.euclideanDistance(p.getPosition()));
 				}
 				
-				for (int i=NUM_PHOTONS_SEARCHING_FOR-1; i<globalPhotons.size(); i++) {
-					Photon p = globalPhotons.get(i);
-					double distance = intersection.euclideanDistance(p.getPosition());
-					if (distance < heap.getMaxDistance()) {
-						heap.insert(p, distance);
-					}
-				}
+				globalMap.getNearestNeighbours(intersection,heap);
+				
+//				for (int i=NUM_PHOTONS_SEARCHING_FOR-1; i<globalPhotons.size(); i++) {
+//					Photon p = globalPhotons.get(i);
+//					double distance = intersection.euclideanDistance(p.getPosition());
+//					if (distance < heap.getMaxDistance()) {
+//						heap.insert(p, distance);
+//					}
+//				}
 				
 				Photon[] ls = heap.getPhotons();
 //				System.out.println(heap);
 				Vector temp = new Vector(0,0,0);
+				Vector normal = currentTracable.getNormal(intersection);
 				for (Photon p: ls) {
-					temp = temp.add(p.getEnergy());
+					if (p.getIncidentDirection() == normal) {temp = temp.add(p.getEnergy());}
+//					temp = temp.add(p.getEnergy());
 				}
 //				System.out.println(temp);
 				double maxDist = heap.getMaxDistance();

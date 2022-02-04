@@ -192,6 +192,40 @@ public class PhotonMap extends AABB {
 		}
 	}
 	
+	/**
+	 * Assumes heap has been initialised with n photons
+	 * @param p
+	 * @param heap
+	 */
+	public void getNearestNeighbours(Point p, PhotonMaxHeap heap) {
+		if (this.isLeaf) {
+			for (Photon photon: photons) {
+				double dist = p.euclideanDistance(photon.getPosition());
+				if (dist < heap.getMaxDistance()) {
+					heap.insert(photon, dist);
+				}
+			}
+		} else {
+			if (left.euclidenDistance(p) < heap.getMaxDistance()) {
+				left.getNearestNeighbours(p,heap);
+			}
+			if (right != null && right.euclidenDistance(p) < heap.getMaxDistance()) {
+				right.getNearestNeighbours(p,heap);
+			}
+		}
+	}
+	
+	/*
+	 * Distance between a point and this bounding box
+	 */
+	public double euclidenDistance(Point p) {
+		double x = Math.max(min.x(), Math.min(p.x(), max.x()));
+		double y = Math.max(min.y(), Math.min(p.y(), max.y()));
+		double z = Math.max(min.z(), Math.min(p.z(), max.z()));
+		Point p2 = new Point(x,y,z);
+		return p.euclideanDistance(p2);
+	}
+	
 	/*
 	 * TODO Make so that photons with vastly different incident directions from the point's surface normal aren't added,
 	 * 	as these could be on a different surface than the current point.
