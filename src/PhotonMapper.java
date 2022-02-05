@@ -26,7 +26,7 @@ public class PhotonMapper extends Application {
     private Point camera;
     private AABB bb; //Bounding box surrounding the scene used as background (well it will be anyway)
     private int MAX_RECURSIVE_DEPTH = 4;
-    private int SAMPLES_PER_PIXEL = 1;
+    private int SAMPLES_PER_PIXEL = 4;
     private KdTree tree;
     private long startTime;
     private long lastDuration = 0;
@@ -35,9 +35,10 @@ public class PhotonMapper extends Application {
     private static int numMisses,numDiffuse,numSpecular,numRefract,numAbsorbed,numAdded;
     private float PHOTON_SEARCH_RADIUS = 10;
     private int NUM_PHOTONS_SEARCHING_FOR = 500;
-    private boolean USING_MINI_SCENE = false;
+    private boolean USING_MINI_SCENE = true;
     private float LIGHT_AMOUNT = 150000f;
-    private int LARGE_SCENE_LIGHT_SCALAR = 5;
+    private int LARGE_SCENE_LIGHT_SCALAR = 10;
+    private int NUM_LIGHT_RAYS = 10000;
     
     private ArrayList<Photon> globalPhotons = new ArrayList<Photon>();
     private PhotonMap globalMap;
@@ -125,7 +126,7 @@ public class PhotonMapper extends Application {
 		
 		startTimer("Building photon maps");
 //		buildGlobalPhotonMap(100000);
-		buildGlobalPhotonMap(30000);
+		buildGlobalPhotonMap(NUM_LIGHT_RAYS);
 //		buildRandomGlobalPhotonMap(1000);
 		finishTimer();
 //		
@@ -1040,43 +1041,13 @@ public class PhotonMapper extends Application {
                 
         for (int j=0; j<h; j++) {
         	for (int i=0; i<w; i++) {
+        		// Creating the ray //
+        		Vector rayVec = new Vector(i-camera.x(), j-camera.y(), -camera.z());
+        		rayVec.normalise();
+        		Ray r = new Ray(new Point(i,j,-1), rayVec); //Persepective projection
         		
-//        		//Super Sampling (Not adaptive so quite slow) -> Value for n => n*n samples
-        		int n = SAMPLES_PER_PIXEL;
-        		if (n > 1) { //ie if super sampling
-            		float step = 1f/n;
-            		float redAcc = 0;
-            		float greenAcc = 0;
-            		float blueAcc = 0;
-            		float upperBound = n/2f;
-            		for (float x=-upperBound; x<upperBound; x++) {
-            			double i2 = i+x*step;
-            			for (float y=-upperBound; y<upperBound; y++) {
-            				double j2 = j+y*step;
-            				
-            				Vector rayVec2 = new Vector(i2+0.5-camera.x(), j2+0.5-camera.y(), -camera.z());
-                    		rayVec2.normalise();
-                    		Ray r2 = new Ray(new Point(i2,j2,-1), rayVec2);
-                    		Color c = trace(r2, MAX_RECURSIVE_DEPTH);
-                    		redAcc += c.getRed();
-                    		greenAcc += c.getGreen();
-                    		blueAcc += c.getBlue();
-            			}
-            		}
-            		redAcc /= n*n; redAcc = (redAcc > 1) ? 1 : (redAcc < 0) ? 0 : redAcc;
-            		greenAcc /= n*n; greenAcc = (greenAcc > 1) ? 1 : (greenAcc < 0) ? 0 : greenAcc;
-            		blueAcc /= n*n; blueAcc = (blueAcc > 1) ? 1 : (blueAcc < 0) ? 0 : blueAcc;
-            		image_writer.setColor(i, j, Color.color(redAcc, greenAcc, blueAcc));
-            		
-        		} else { //Just 1 ray so no super sampling
-        			// Creating the ray //
-            		Vector rayVec = new Vector(i-camera.x(), j-camera.y(), -camera.z());
-            		rayVec.normalise();
-            		Ray r = new Ray(new Point(i,j,-1), rayVec); //Persepective projection
-            		
-//            		image_writer.setColor(i, j, trace(r,MAX_RECURSIVE_DEPTH)); //Standard render
-            		image_writer.setColor(i, j, testTrace(r,MAX_RECURSIVE_DEPTH)); //For photon mapping stuff (Direct visualisation)
-        		}
+//        		image_writer.setColor(i, j, trace(r,MAX_RECURSIVE_DEPTH)); //Standard render
+        		image_writer.setColor(i, j, testTrace(r,MAX_RECURSIVE_DEPTH)); //For photon mapping stuff (Direct visualisation)
         	}
 //        	System.out.println("Row " + (j+1) + "/" + h + " completed!");
         }
