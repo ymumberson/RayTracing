@@ -216,6 +216,29 @@ public class PhotonMap extends AABB {
 	}
 	
 	/*
+	 * Gets nearest N neighbours but only includes shadow photons and illumination photons
+	 */
+	public void getNearestNeighboursDirectIllumination(Point p, PhotonMaxHeap heap) {
+		if (this.isLeaf) {
+			for (Photon photon: photons) {
+				if (photon.isIlluminationPhoton() || photon.isShadowPhoton()) {
+					double dist = p.euclideanDistance(photon.getPosition());
+					if (dist < heap.getMaxDistance()) {
+						heap.insert(photon, dist);
+					}
+				}
+			}
+		} else {
+			if (left.euclidenDistance(p) < heap.getMaxDistance()) {
+				left.getNearestNeighboursDirectIllumination(p,heap);
+			}
+			if (right != null && right.euclidenDistance(p) < heap.getMaxDistance()) {
+				right.getNearestNeighboursDirectIllumination(p,heap);
+			}
+		}
+	}
+	
+	/*
 	 * Distance between a point and this bounding box
 	 */
 	public double euclidenDistance(Point p) {

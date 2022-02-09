@@ -9,6 +9,7 @@ public class Photon {
 	private Point position;
 	private Vector incidentDirection;
 	private Vector energy;
+	private boolean illuminationPhoton;
 	private boolean shadowPhoton;
 	
 	public Photon(Point position, Vector incidentDirection, Vector energy) {
@@ -16,13 +17,20 @@ public class Photon {
 		this.incidentDirection = incidentDirection;
 		this.energy = energy;
 		this.shadowPhoton = false;
+		this.illuminationPhoton = false;
 	}
 	
-	public Photon(Point position, Vector incidentDirection, Vector energy, Boolean shadowPhoton) {
+	/*
+	 * For creating illumination and shadow photons.
+	 * if illuminated == false -> Shadow photon.
+	 * if illuminated == true -> illumination photon.
+	 */
+	public Photon(Point position, Vector incidentDirection, Vector energy, Boolean illuminated) {
 		this.position = position;
 		this.incidentDirection = incidentDirection;
 		this.energy = energy;
-		this.shadowPhoton = shadowPhoton;
+		this.illuminationPhoton = illuminated;
+		this.shadowPhoton = !illuminated;
 	}
 	
 	public Point getPosition() {
@@ -39,6 +47,10 @@ public class Photon {
 	
 	public boolean isShadowPhoton() {
 		return shadowPhoton;
+	}
+	
+	public boolean isIlluminationPhoton() {
+		return illuminationPhoton;
 	}
 	
 	/**
