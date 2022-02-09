@@ -35,10 +35,10 @@ public class PhotonMapper extends Application {
     private static int numMisses,numDiffuse,numSpecular,numRefract,numAbsorbed,numAdded;
     private float PHOTON_SEARCH_RADIUS = 10;
     private int NUM_PHOTONS_SEARCHING_FOR = 500;
-    private boolean USING_MINI_SCENE = true;
+    private boolean USING_MINI_SCENE = false;
     private float LIGHT_AMOUNT = 150000f;
     private int LARGE_SCENE_LIGHT_SCALAR = 10;
-    private int NUM_LIGHT_RAYS = 1000000;
+    private int NUM_LIGHT_RAYS = 10000;
     
     private ArrayList<Photon> globalPhotons = new ArrayList<Photon>();
     private PhotonMap globalMap;
@@ -300,15 +300,15 @@ public class PhotonMapper extends Application {
 		System.out.println("Number of photons in map: " + globalMap.getNumPhotons());
 	}
 	
-	public void traceLightRay(Ray r, Vector rayPower) {
-		traceLightRay(r, rayPower, false);
+	public void traceLightRay(Ray r, Vector rayPower, ArrayList<Photon> mapList, PhotonMap map) {
+		traceLightRay(r, rayPower, mapList, false);
 	}
 	
 	/*
 	 * Doesn't have a recursive depth, but should eventually terminate
 	 * according to russian roulette.
 	 */
-	public void traceLightRay(Ray r, Vector rayPower, boolean comesFromLightSource) {
+	public void traceLightRay(Ray r, Vector rayPower, ArrayList<Photon> mapList, boolean comesFromLightSource) {
 		
 		//Find tracable intersected by light ray
 		Tracable hitTracable = tracableObjects.get(0);
@@ -348,19 +348,19 @@ public class PhotonMapper extends Application {
 					
 					dir = calculateDiffuseDir(hitTracable,r,intersection);
 					newR = new Ray(intersection,dir);
-					traceLightRay(newR,newPower);
+					traceLightRay(newR,newPower,mapList);
 					break;
 				case 2: //Specular reflection
 					numSpecular++;
 					dir = calculateReflectedDir(hitTracable,r,intersection);
 					newR = new Ray(intersection.add(new Point(dir)),dir); //Think reflections were getting stuck (intersecting themselves)
-					traceLightRay(newR,rayPower); //Power doesn't change
+					traceLightRay(newR,rayPower,mapList); //Power doesn't change
 					break;
 				case 3: //Refraction
 					numRefract++;
 					dir = calculateReflectedDir(hitTracable,r,intersection);
 					newR = new Ray(intersection.add(new Point(dir)),dir);
-					traceLightRay(newR,rayPower); //Power doesn't change
+					traceLightRay(newR,rayPower,mapList); //Power doesn't change
 					break;
 				default: //Absorption
 					numAbsorbed++;
@@ -381,9 +381,12 @@ public class PhotonMapper extends Application {
 //			}
 			
 			if (comesFromLightSource) {
-				//Creating illumination photon
-				Photon p = new Photon(intersection,hitTracable.getNormal(intersection),rayPower,true);
-				globalPhotons.add(p);
+				//Only create illumination photon if surface is diffuse
+				if (hitTracable.isDiffuse()) {
+					//Creating illumination photon
+					Photon p = new Photon(intersection,hitTracable.getNormal(intersection),rayPower,true);
+					globalPhotons.add(p);
+				}
 				
 				//Creating shadow photon
 				Tracable nextTracable = null;
@@ -397,10 +400,13 @@ public class PhotonMapper extends Application {
 							nextT = tempT;
 							nextTracable = temp;
 							
-							//Create shadow photon at intersection point
-							Point intersectionPoint = r.getPoint(nextT);
-							Photon shadowP = new Photon(intersectionPoint,nextTracable.getNormal(intersectionPoint),rayPower,false);
-							globalPhotons.add(shadowP);
+							//Only create shadow photon if surface is diffuse
+							if (nextTracable.isDiffuse()) {
+								//Create shadow photon at intersection point with negative power
+								Point intersectionPoint = r.getPoint(nextT);
+								Photon shadowP = new Photon(intersectionPoint,nextTracable.getNormal(intersectionPoint),rayPower.multiply(-1),false);
+								globalPhotons.add(shadowP);
+							}
 						}
 					}
 				}
@@ -509,23 +515,129 @@ public class PhotonMapper extends Application {
 			
 			/*
 			 * Part 1: Direct Illumination
+			 * TODO Currently not sending out shadow rays at borders, and instead averaging out the radiance
 			 */
 			Vector direct = new Vector(0,0,0);
+			int numDirectPhotons = 150;
+			PhotonMaxHeap directHeap = new PhotonMaxHeap(numDirectPhotons);
+			
+			//Initialise heap with first N photons (shadow or illumination only)
+			int count = 0;
+			Photon p;
+			for (int i=0; i<globalPhotons.size(); i++) {
+				p = globalPhotons.get(i);
+				if (p.isIlluminationPhoton() || p.isShadowPhoton()) {
+					directHeap.insert(p, intersection.euclideanDistance(p.getPosition()));
+					count++;
+				}
+				if (count >= numDirectPhotons) {
+					break;
+				}
+			}
+			
+			//Find nearest N photons (shadow or illumination only)
+			globalMap.getNearestNeighboursDirectIllumination(intersection, directHeap);
+			int nI = directHeap.getNumIlluminationPhotons();
+//			int nS = directHeap.getNumShadowPhotons();
+//			System.out.println(nI + " | " + nS + " | " + directHeap.getSize() + " | " + directHeap.getMaxSize() + " | " + directHeap.testSize());
+			
+			if (nI > 0) { //Only illumination photon nearby
+				Photon[] ls = directHeap.getPhotons();
+//				System.out.println(heap);
+				Vector temp = new Vector(0,0,0);
+				Vector normal = currentTracable.getNormal(intersection);
+				for (Photon phot: ls) {
+					if (phot.getIncidentDirection() == normal) {temp = temp.add(phot.getEnergy());} //Only add energy if normals the same
+//					temp = temp.add(p.getEnergy()); //Add energy
+				}
+				double maxDist = directHeap.getMaxDistance();
+				Vector vec = temp.divide(Math.PI * maxDist*maxDist);
+				direct = vec.multiply(new Vector(currentTracable.getColor()));
+			}
+			
 			
 			/*
 			 * Part 2: Specular & Glossy Reflections
+			 * -> Currently just using fresnel
+			 * -> Not doing importance sampling for glossy surfaces as I don't have glossy surfaces
 			 */
 			Vector specular = new Vector(0,0,0);
+			if (currentTracable.isReflective() || currentTracable.isRefractive()) {
+				float kr = 0;
+				Vector n = currentTracable.getNormal(intersection);
+				float etat = (float)currentTracable.getRefractiveIndex();
+				
+				float cosi = (float) Math.max(-1,Math.min(1, r.d().dot(n)));
+				float etai = 1; //Refractive index of air
+				if (cosi > 0) {
+					float temp = etai;
+					etai = etat;
+					etat = temp;
+				}
+				
+				//Compute using Snell's law
+				float sint = (float) (etai / etat * Math.sqrt(Math.max(0f, 1 - cosi*cosi)));
+				
+				if (sint >= 1) { //Total internal reflection
+					kr = 1;
+				} else {
+					float cost = (float) Math.sqrt(Math.max(0f, 1 - sint*sint));
+					cosi = Math.abs(cosi);
+					float rS = (float) (((etat*cosi) - (etai*cost)) / ((etat*cosi) + (etai * cost)));
+					float rP = (float) (((etai*cosi) - (etat*cost)) / ((etai*cosi) + (etat * cost)));
+//					System.out.println(rS + " " + rP + " " + cost + " " + cosi);
+					kr = (rS * rS + rP * rP) / 2f;
+				}
+				float kt = 1-kr;
+				if (currentTracable.isRefractive()) {
+					float temp = kt;
+					kt = kr;
+					kr = temp;
+				}
+				if (kr < 1) {
+					specular = refract(currentTracable,kr,r,specular,intersection,recursiveDepth);
+				}
+				specular = reflect(currentTracable,kt,r,specular,intersection,recursiveDepth);
+			}
+			
 			
 			/*
 			 * Part 3: Caustics
+			 * TODO Need to implement the caustics photon map
 			 */
 			Vector caustics = new Vector(0,0,0);
+			
 			
 			/*
 			 * Part 4: Multiple diffuse reflections
 			 */
 			Vector diffuse = new Vector(0,0,0);
+//			if (currentTracable.isDiffuse()) {
+//				int numRays = 10;
+//				float diffusePerc = 0.35f;
+////				currentColor = currentColor.multiply(1-diffusePerc);
+//				for (int i=0; i<numRays; i++) {
+////					diffuse = diffuse.add(diffuseReflect(currentTracable,diffuse,intersection,diffusePerc/numRays,recursiveDepth-1));
+//					Vector diffuseDir = this.calculateDiffuseDir(currentTracable, r, intersection);
+//					Ray diffuseR = new Ray(intersection, diffuseDir);
+//					
+//					Tracable hitTracable = tracableObjects.get(0);
+//					double t2 = -1;
+//					for (Object o: tracableObjects) {
+//						Tracable temp = (Tracable) o;
+//						double tempT = temp.getIntersect(diffuseR);
+////						if (tempT > t && !Double.isNaN(tempT) && !Double.isInfinite(tempT)) {
+//						if ((t2 < 0 && tempT > t2) || (t2 >= 0 && tempT < t2 && tempT >= 0)) {
+//							//System.out.println("replacing t:" + t + " with tempT:" + tempT);
+//							t2 = tempT;
+//							hitTracable = temp;
+//						}
+//					}
+//					if (t2 >= 0 && hitTracable.isDiffuse()) {
+//						diffuse = diffuse.add(new Vector(hitTracable.getColor()).multiply(diffusePerc).divide(numRays));
+//					}
+//				}
+//			}
 			
 			
 			//Colour is sum of components
@@ -696,8 +808,7 @@ public class PhotonMapper extends Application {
 				}
 				currentColor = reflect(currentTracable,kt,r,currentColor,intersection,recursiveDepth);
 //				System.out.println("Kr: " + kr + " | Kt: " + (1-kr));
-				
-			//Messing with colour bleeding via diffuse reflections	
+					
 			} else { 
 				PhotonMaxHeap heap = new PhotonMaxHeap(NUM_PHOTONS_SEARCHING_FOR);
 				for (int i=0; i<NUM_PHOTONS_SEARCHING_FOR; i++) {

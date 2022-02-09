@@ -110,6 +110,14 @@ public class PhotonMaxHeap {
 		return photons;
 	}
 	
+	public int getMaxSize() {
+		return maxsize;
+	}
+	
+	public int getSize() {
+		return size;
+	}
+	
 	public static void main(String[] args) {
 		PhotonMaxHeap heap = new PhotonMaxHeap(10);
 		System.out.println(heap);
@@ -145,5 +153,51 @@ public class PhotonMaxHeap {
 			}
 		}
 		return str;
+	}
+	
+	public int getNumShadowPhotons() {
+		if (size == 0) return 0;
+		if (size == 1) return photons[0].isShadowPhoton()? 1 : 0;
+		
+		int numShadowPhotons = 0;
+		for (int i=0; i<size; i++) {
+			if (photons[i].isShadowPhoton()) numShadowPhotons++;
+		}
+//		for (int i=0; i<size/2; i++) {
+////			str += "Parent node: {" + distances[i] + "}\n";
+//			if (photons[i].isShadowPhoton()) numShadowPhotons++;
+//			if (left(i) < size) {
+////				str += "Left child: {" + distances[left(i)] + "}\n";
+//				if (photons[left(i)].isShadowPhoton()) numShadowPhotons++;
+//			}
+//			if (right(i) < size) {
+////				str += "Right child: {" + distances[right(i)] + "}\n";
+//				if (photons[right(i)].isShadowPhoton()) numShadowPhotons++;
+//			}
+//		}
+		return numShadowPhotons;
+	}
+	
+	public int getNumIlluminationPhotons() {
+		if (size == 0) return 0;
+		if (size == 1) return photons[0].isIlluminationPhoton()? 1 : 0;
+		
+		int numIlluminationPhotons = 0;
+		for (int i=0; i<size; i++) {
+			if (photons[i].isIlluminationPhoton()) numIlluminationPhotons++;
+		}
+//		for (int i=0; i<size/2; i++) {
+////			str += "Parent node: {" + distances[i] + "}\n";
+//			if (photons[i].isIlluminationPhoton()) numIlluminationPhotons++;
+//			if (left(i) < size) {
+////				str += "Left child: {" + distances[left(i)] + "}\n";
+//				if (photons[left(i)].isIlluminationPhoton()) numIlluminationPhotons++;
+//			}
+//			if (right(i) < size) {
+////				str += "Right child: {" + distances[right(i)] + "}\n";
+//				if (photons[right(i)].isIlluminationPhoton()) numIlluminationPhotons++;
+//			}
+//		}
+		return numIlluminationPhotons;
 	}
 }
