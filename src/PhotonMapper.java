@@ -26,7 +26,7 @@ public class PhotonMapper extends Application {
     private Point camera;
     private AABB bb; //Bounding box surrounding the scene used as background (well it will be anyway)
     private int MAX_RECURSIVE_DEPTH = 4;
-    private int SAMPLES_PER_PIXEL = 4;
+    private int SAMPLES_PER_PIXEL = 1;
     private KdTree tree;
     private long startTime;
     private long lastDuration = 0;
@@ -38,7 +38,7 @@ public class PhotonMapper extends Application {
     private boolean USING_MINI_SCENE = true;
     private float LIGHT_AMOUNT = 150000f;
     private int LARGE_SCENE_LIGHT_SCALAR = 10;
-    private int NUM_LIGHT_RAYS = 10000;
+    private int NUM_LIGHT_RAYS = 1000;
     
     private ArrayList<Photon> globalPhotons = new ArrayList<Photon>();
     private PhotonMap globalMap;
