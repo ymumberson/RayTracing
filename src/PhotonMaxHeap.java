@@ -110,6 +110,10 @@ public class PhotonMaxHeap {
 		return photons;
 	}
 	
+	public double[] getDistances() {
+		return distances;
+	}
+	
 	public int getMaxSize() {
 		return maxsize;
 	}
