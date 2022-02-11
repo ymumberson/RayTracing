@@ -1062,8 +1062,11 @@ public class Main extends Application {
 		
 		if (k < 0) {
 //			System.out.println("Total internal refraction");
+//			return new Vector(0,0,1);
 		} else {
 			Vector out = n.multiply((eta * cosi - Math.sqrt(k))).add(i.multiply(eta));
+//			Vector out = i.multiply(eta).minus(n.multiply(eta*nDotI+Math.sqrt(k)));
+//			Vector out = (i.minus(n.multiply(nDotI))).multiply(eta).minus(n.multiply(Math.sqrt(k)));
 			out.normalise();
 			
 			Ray refractedRay = new Ray(intersection, out);
@@ -1088,6 +1091,7 @@ public class Main extends Application {
 			red += refracPerc*refractionColor.getRed();
 			green += refracPerc*refractionColor.getGreen();
 			blue += refracPerc*refractionColor.getBlue();
+//			return new Vector(refractionColor.getRed(),refractionColor.getGreen(),refractionColor.getBlue());
 		}
 		return new Vector(red,green,blue);
 	}

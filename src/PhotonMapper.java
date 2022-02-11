@@ -17,7 +17,8 @@ import javafx.stage.Stage;
 public class PhotonMapper extends Application {
 //	private int x_axis = 750; private int y_axis = 800; private int z_axis = 750; //For actual scene
 //	private int x_axis = 750/3; private int y_axis = 800/3; private int z_axis = 750/3; //For mini scene
-	private int x_axis,y_axis,z_axis;
+	private float x_axis=7.5f,y_axis=8f,z_axis=7.5f;
+	private int imgX=750,imgY=800;
 	
 	
 	
@@ -34,11 +35,12 @@ public class PhotonMapper extends Application {
     private boolean USING_KD_TREES = false;
     private static int numMisses,numDiffuse,numSpecular,numRefract,numAbsorbed,numAdded;
     private float PHOTON_SEARCH_RADIUS = 10;
-    private int NUM_PHOTONS_SEARCHING_FOR = 500;
+    private int NUM_PHOTONS_SEARCHING_FOR = 100;
     private boolean USING_MINI_SCENE = true;
-    private float LIGHT_AMOUNT = 150000f;
+//    private float LIGHT_AMOUNT = 300f;
+    private float LIGHT_AMOUNT = 200f;
     private int LARGE_SCENE_LIGHT_SCALAR = 10;
-    private int NUM_LIGHT_RAYS = 100000;
+    private int NUM_LIGHT_RAYS = 10000;
     
     //Global photon map
     private ArrayList<Photon> globalPhotons = new ArrayList<Photon>();
@@ -57,18 +59,20 @@ public class PhotonMapper extends Application {
 	@Override
 	public void start(Stage primaryStage) throws Exception {
 		if (USING_MINI_SCENE) {
-			x_axis = 750/3; y_axis = 800/3; z_axis = 750/3; //For mini scene
+//			x_axis = 750/3; y_axis = 800/3; z_axis = 750/3; //For mini scene
+			imgX = 750/3; imgY = 800/3;
 		} else {
-			x_axis = 750; y_axis = 800; z_axis = 750; //For actual scene
+//			x_axis = 750; y_axis = 800; z_axis = 750; //For actual scene
+			imgX = 750; imgY = 800;
 		}
 		
-		WritableImage img = new WritableImage(x_axis, y_axis);
+		WritableImage img = new WritableImage(imgX, imgY);
 		ImageView imgView = new ImageView(img);
 		
-		WritableImage globalPhotonMapImg = new WritableImage(x_axis,y_axis);
+		WritableImage globalPhotonMapImg = new WritableImage(imgX,imgY);
 		ImageView globalPhotonMapImgView = new ImageView(globalPhotonMapImg);
 		
-		WritableImage causticsPhotonMapImg = new WritableImage(x_axis,y_axis);
+		WritableImage causticsPhotonMapImg = new WritableImage(imgX,imgY);
 		ImageView causticsPhotonMapImgView = new ImageView(causticsPhotonMapImg);
 		
 		Point min = new Point(-1,-1,-1);
@@ -100,7 +104,7 @@ public class PhotonMapper extends Application {
         renderCausticsPhotonMap(causticsPhotonMapImg);
         
         int padding = 5;
-        Scene scene = new Scene(root, x_axis*3+padding*2, y_axis+padding);
+        Scene scene = new Scene(root, imgX*3+padding*2, imgY+padding);
         primaryStage.setScene(scene);
         primaryStage.show();
 	}
@@ -109,7 +113,7 @@ public class PhotonMapper extends Application {
 	public void traceActualScene(WritableImage img) {
 //      light = new Point((x_axis-1)*0.5,0,0);
 //		light = new Point((x_axis-1)*0.5,y_axis/3,-10);
-		light = new Point((x_axis-1)*0.5,y_axis/3,z_axis/2);
+		light = new Point((x_axis)*0.5,y_axis/3,z_axis/2);
 		initialiseActualScene();
 		
 		if (USING_KD_TREES) {
@@ -157,15 +161,9 @@ public class PhotonMapper extends Application {
 	public void initialiseActualScene() {
 		float diffusePercent = 0.8f;
 		
-		int rad1;
-		if (USING_MINI_SCENE) {
-			rad1 = 150/3;
-		} else {
-			rad1 = 150;
-		}
-//		int rad1 = 150/3; //For mini
-//		int rad1 = 150; //For normal
-		Sphere s1 = new Sphere(new Point(x_axis/3,y_axis-rad1,z_axis-rad1*2),rad1);
+		float rad1 = 1.5f;
+//		Sphere s1 = new Sphere(new Point(x_axis/3,y_axis-rad1,z_axis-rad1*2),rad1);
+		Sphere s1 = new Sphere(new Point(x_axis/3,y_axis-rad1,z_axis-rad1*2f), rad1);
 //		Sphere s1 = new Sphere(new Point(x_axis/3,y_axis-rad1,z_axis-200),rad1);
 		s1.setColor(Color.WHITE);
 		s1.setReflectedPercent(0.9);
@@ -174,19 +172,10 @@ public class PhotonMapper extends Application {
 		tracableObjects.add(s1);
 		reflectiveSphere = s1;
 		
-		int rad2,padding;
-		if (USING_MINI_SCENE) {
-			rad2 = 100/3;
-			padding = 0;
-		} else {
-			rad2 = 100;
-			padding = 50;
-		}
-//		int rad2 = 100; //For normal
-//		int rad2 = 100/3; //for mini
-//		int padding = 50; //for normal
-//		int padding = 0; //for mini
-		Sphere s2 = new Sphere(new Point(x_axis*3/4-padding,y_axis-rad2,z_axis/3-padding),rad2);
+		float rad2 = 1f;
+		float padding = 0.5f;
+//		Sphere s2 = new Sphere(new Point(x_axis*3/4-padding,y_axis-rad2,z_axis/3-padding),rad2);
+		Sphere s2 = new Sphere(new Point((x_axis/3)*2,y_axis-rad2,z_axis/3-1),rad2);
 		s2.setColor(Color.WHITE);
 		s2.setRefractedPercent(0.9);
 		s2.setRefractiveIndex(1.5f);
@@ -294,12 +283,13 @@ public class PhotonMapper extends Application {
 //		double pow = 1f/numPhotons; //Assuming white light (1,1,1)
 //		double pow = 1;
 //		double pow = 5;
-		double pow = 1; //default
-		if (USING_MINI_SCENE) {
-			pow = LIGHT_AMOUNT/numPhotons;
-		} else {
-			pow = (LIGHT_AMOUNT/numPhotons) * LARGE_SCENE_LIGHT_SCALAR; //Because normal scene is 3x bigger
-		}
+//		double pow = 1; //default
+//		if (USING_MINI_SCENE) {
+//			pow = LIGHT_AMOUNT/numPhotons;
+//		} else {
+//			pow = (LIGHT_AMOUNT/numPhotons) * LARGE_SCENE_LIGHT_SCALAR; //Because normal scene is 3x bigger
+//		}
+		double pow = LIGHT_AMOUNT/numPhotons;
 		for (int i=0; i<numPhotons; i++) {
 			Vector dir = s.generateRandomUnitVector();
 			dir.normalise();
@@ -320,26 +310,28 @@ public class PhotonMapper extends Application {
 	}
 	
 	public void buildCausticsPhotonMap(int numPhotons) {
-		double pow = 1; //default
-		if (USING_MINI_SCENE) {
-			pow = LIGHT_AMOUNT/numPhotons;
-		} else {
-			pow = (LIGHT_AMOUNT/numPhotons) * LARGE_SCENE_LIGHT_SCALAR; //Because normal scene is 3x bigger
-		}
+//		double pow = 1; //default
+//		if (USING_MINI_SCENE) {
+//			pow = LIGHT_AMOUNT/numPhotons;
+//		} else {
+//			pow = (LIGHT_AMOUNT/numPhotons) * LARGE_SCENE_LIGHT_SCALAR; //Because normal scene is 3x bigger
+//		}
+		
+		double pow = LIGHT_AMOUNT/numPhotons;
 		
 		//Fire rays at reflective sphere
 		Point target;
 		Vector dir;
 		Ray r;
 		Vector rayPower = new Vector(pow,pow,pow);
-		for (int i=0; i<numPhotons/2; i++) {
-			target = reflectiveSphere.c().add(reflectiveSphere.generateRandomUnitPoint()
-					.multiply(reflectiveSphere.getRadius()));
-			dir = new Vector(target.subtract(light));
-			dir.normalise();
-			r = new Ray(light,dir);
-			traceLightRay(r,rayPower,causticsPhotons);
-		}
+//		for (int i=0; i<numPhotons/2; i++) {
+//			target = reflectiveSphere.c().add(reflectiveSphere.generateRandomUnitPoint()
+//					.multiply(reflectiveSphere.getRadius()));
+//			dir = new Vector(target.subtract(light));
+//			dir.normalise();
+//			r = new Ray(light,dir);
+//			traceLightRay(r,rayPower,causticsPhotons);
+//		}
 		
 		//Fire rays at refractive sphere
 		for (int i=0; i<numPhotons/2; i++) {
@@ -352,8 +344,16 @@ public class PhotonMapper extends Application {
 			traceLightRay(r,rayPower,causticsPhotons);
 		}
 		
+		System.out.println("Num Added: " + numAdded);
+		System.out.println("Num Absorbed: " + numAbsorbed);
+		System.out.println("Num Specular: " + numSpecular);
+		System.out.println("Num Diffuse: " + numDiffuse);
+		System.out.println("Num Refract: " + numRefract);
+		System.out.println("Num Missed: " + numMisses);
+		
 		causticsMap.build(causticsPhotons.toArray(new Photon[causticsPhotons.size()]), 30, 1);
 		System.out.println("Number of photons in map: " + causticsMap.getNumPhotons());
+		System.out.println(refractiveSphere);
 	}
 	
 	public void traceLightRay(Ray r, Vector rayPower, ArrayList<Photon> mapList) {
@@ -396,6 +396,7 @@ public class PhotonMapper extends Application {
 			Vector dir;
 			Ray newR;
 			boolean absorbed = false;
+			float padding = 0.001f;
 			switch (hitTracable.russianRoulette(r, intersection)) {
 				case 1: //Diffuse reflection
 					numDiffuse++;
@@ -409,13 +410,13 @@ public class PhotonMapper extends Application {
 				case 2: //Specular reflection
 					numSpecular++;
 					dir = calculateReflectedDir(hitTracable,r,intersection);
-					newR = new Ray(intersection.add(new Point(dir)),dir); //Think reflections were getting stuck (intersecting themselves)
+					newR = new Ray(intersection.add(new Point(dir).multiply(padding)),dir); //Think reflections were getting stuck (intersecting themselves)
 					traceLightRay(newR,rayPower,mapList); //Power doesn't change
 					break;
 				case 3: //Refraction
 					numRefract++;
 					dir = calculateRefractedDir(hitTracable,r,intersection);
-					newR = new Ray(intersection.add(new Point(dir)),dir);
+					newR = new Ray(intersection.add(new Point(dir).multiply(padding)),dir);
 					traceLightRay(newR,rayPower,mapList); //Power doesn't change
 					break;
 				default: //Absorption
@@ -486,10 +487,10 @@ public class PhotonMapper extends Application {
 	}
 	
 	public void render(WritableImage img) {
-		int w=(int) img.getWidth(), h=(int) img.getHeight();
+		double w= img.getWidth(), h= img.getHeight();
         PixelWriter image_writer = img.getPixelWriter();
 //        light = new Point(lightX,y_axis/2,z_axis/2);
-        camera = new Point(w/2.0f,h/2.0f,-1000f);
+        camera = new Point((x_axis)/2.0f,(y_axis)/2.0f,-10f);
                 
         for (int j=0; j<h; j++) {
         	for (int i=0; i<w; i++) {
@@ -523,15 +524,20 @@ public class PhotonMapper extends Application {
             		
         		} else { //Just 1 ray so no super sampling
         			// Creating the ray //
-            		Vector rayVec = new Vector(i-camera.x(), j-camera.y(), -camera.z());
+//            		Vector rayVec = new Vector(i-camera.x(), j-camera.y(), -camera.z());
+        			double x = ((double)i/w)*x_axis;
+        			double y = ((double)j/h)*y_axis;
+//        			System.out.println(i + " " + j + " -> " + x + " " + y);
+        			Vector rayVec = new Vector(x-camera.x(), y-camera.y(), -camera.z());
             		rayVec.normalise();
-            		Ray r = new Ray(new Point(i,j,-1), rayVec); //Persepective projection
+//            		Ray r = new Ray(new Point(i,j,-1), rayVec); //Persepective projection
+            		Ray r = new Ray(new Point(x,y,0),rayVec);
             		
             		image_writer.setColor(i, j, trace(r,MAX_RECURSIVE_DEPTH)); //Standard render
 //            		image_writer.setColor(i, j, testTrace(r,MAX_RECURSIVE_DEPTH)); //For photon mapping stuff (Direct visualisation)
         		}
         	}
-        	System.out.println("Row " + (j+1) + "/" + h + " completed!");
+        	System.out.println("Row " + (j+1) + "/" + (int)h + " completed!");
         }
 	}
 	
@@ -574,7 +580,7 @@ public class PhotonMapper extends Application {
 			 * TODO Currently not sending out shadow rays at borders, and instead averaging out the radiance
 			 */
 			Vector direct = new Vector(0,0,0);
-			int numDirectPhotons = 150;
+			int numDirectPhotons = 500;
 			PhotonMaxHeap directHeap = new PhotonMaxHeap(numDirectPhotons);
 			
 			//Initialise heap with first N photons (shadow or illumination only)
@@ -582,17 +588,23 @@ public class PhotonMapper extends Application {
 			Photon p;
 			for (int i=0; i<globalPhotons.size(); i++) {
 				p = globalPhotons.get(i);
-				if (p.isIlluminationPhoton() || p.isShadowPhoton()) {
-					directHeap.insert(p, intersection.euclideanDistance(p.getPosition()));
-					count++;
-				}
+//				if (p.isIlluminationPhoton() || p.isShadowPhoton()) {
+//					directHeap.insert(p, intersection.euclideanDistance(p.getPosition()));
+//					count++;
+//				}
+//				if (count >= numDirectPhotons) {
+//					break;
+//				}
+				directHeap.insert(p, intersection.euclideanDistance(p.getPosition()));
+				count++;
 				if (count >= numDirectPhotons) {
 					break;
 				}
 			}
 			
 			//Find nearest N photons (shadow or illumination only)
-			globalMap.getNearestNeighboursDirectIllumination(intersection, directHeap);
+//			globalMap.getNearestNeighboursDirectIllumination(intersection, directHeap);
+			globalMap.getNearestNeighbours(intersection, directHeap);
 			int nI = directHeap.getNumIlluminationPhotons();
 //			int nS = directHeap.getNumShadowPhotons();
 //			System.out.println(nI + " | " + nS + " | " + directHeap.getSize() + " | " + directHeap.getMaxSize() + " | " + directHeap.testSize());
@@ -684,7 +696,7 @@ public class PhotonMapper extends Application {
 ////			System.out.println(heap);
 //			Vector tempV = new Vector(0,0,0);
 //			Vector normal = currentTracable.getNormal(intersection);
-//			float k=1;
+//			float k=0.01f;
 //			double weight;
 //			Photon p3;
 //			double maxDist = heap.getMaxDistance();
@@ -913,13 +925,15 @@ public class PhotonMapper extends Application {
 //		}
 		double red = c.dx();
 		double green = c.dy();
-		double blue = c.dz();
+		double blue = c.dz();		
+		
 		Vector n = currentTracable.getNormal(intersection);
 		Vector i = r.d();
+//		double eta = currentTracable.getRefractiveIndex();
 		double nDotI = n.dot(i);
+//		double k = 1.0 - eta*eta*(1.0- nDotI*nDotI);
 		double cosi = Math.max(Math.min(1, nDotI),-1);
 		double etai = 1, etat = currentTracable.getRefractiveIndex();
-		
 		if (cosi < 0) {
 			cosi = -cosi;
 		} else {
@@ -931,16 +945,21 @@ public class PhotonMapper extends Application {
 		double eta = etai/etat;
 		double k = 1 - eta*eta*(1-cosi*cosi);
 		
+		
 		if (k < 0) {
 //			System.out.println("Total internal refraction");
+//			return new Vector(0,0,1);
 		} else {
 			Vector out = n.multiply((eta * cosi - Math.sqrt(k))).add(i.multiply(eta));
+//			Vector out = i.multiply(eta).minus(n.multiply(eta*nDotI+Math.sqrt(k)));
+//			Vector out = (i.minus(n.multiply(nDotI))).multiply(eta).minus(n.multiply(Math.sqrt(k)));
 			out.normalise();
 			
-			Ray refractedRay = new Ray(intersection, out);
+			Ray refractedRay = new Ray(intersection.add(new Point(out).multiply(0.001f)), out);
 			//if (intersection == r.o()) { //Accounts for rounding error, advances point forward if is same as current ray origin
-				Point p = intersection.add(new Point(r.d()));
-				refractedRay = new Ray(p, out);
+//				Point p = intersection.add(new Point(r.d()).multiply(0.001f));
+//				Point p = intersection.add(new Point(r.d()));
+//				refractedRay = new Ray(p, out);
 			//}
 			
 			double t2 = currentTracable.getIntersect(refractedRay); 
@@ -960,6 +979,7 @@ public class PhotonMapper extends Application {
 			green += refracPerc*refractionColor.getGreen();
 			blue += refracPerc*refractionColor.getBlue();
 		}
+		
 		return new Vector(red,green,blue);
 	}
 	
@@ -988,11 +1008,12 @@ public class PhotonMapper extends Application {
 			Vector out = n.multiply((eta * cosi - Math.sqrt(k))).add(i.multiply(eta));
 			out.normalise();
 			
-			Ray refractedRay = new Ray(intersection, out);
-			//if (intersection == r.o()) { //Accounts for rounding error, advances point forward if is same as current ray origin
-				Point p = intersection.add(new Point(r.d()));
-				refractedRay = new Ray(p, out);
-			//}
+			Ray refractedRay = new Ray(intersection.add(new Point(out).multiply(0.001f)), out);
+//			Ray refractedRay = new Ray(intersection, out);
+//			//if (intersection == r.o()) { //Accounts for rounding error, advances point forward if is same as current ray origin
+//				Point p = intersection.add(new Point(r.d()).multiply(0.001f));
+//				refractedRay = new Ray(p, out);
+//			//}
 			
 			double t2 = currentTracable.getIntersect(refractedRay); 
 			if (t2 >= 0) { //Recurse
@@ -1065,42 +1086,48 @@ public class PhotonMapper extends Application {
 	}
 	
 	public void renderGlobalPhotonMap(WritableImage img) {
-		int w=(int) img.getWidth(), h=(int) img.getHeight();
+		double w= img.getWidth(), h= img.getHeight();
         PixelWriter image_writer = img.getPixelWriter();
 //        light = new Point(lightX,y_axis/2,z_axis/2);
-        camera = new Point(w/2.0f,h/2.0f,-1000f);
+        camera = new Point((x_axis)/2.0f,(y_axis)/2.0f,-10f);
                 
         for (int j=0; j<h; j++) {
         	for (int i=0; i<w; i++) {
-        		// Creating the ray //
-        		Vector rayVec = new Vector(i-camera.x(), j-camera.y(), -camera.z());
+//        		Vector rayVec = new Vector(i-camera.x(), j-camera.y(), -camera.z());
+    			double x = ((double)i/w)*x_axis;
+    			double y = ((double)j/h)*y_axis;
+//    			System.out.println(i + " " + j + " -> " + x + " " + y);
+    			Vector rayVec = new Vector(x-camera.x(), y-camera.y(), -camera.z());
         		rayVec.normalise();
-        		Ray r = new Ray(new Point(i,j,-1), rayVec); //Persepective projection
+//        		Ray r = new Ray(new Point(i,j,-1), rayVec); //Persepective projection
+        		Ray r = new Ray(new Point(x,y,0),rayVec);
         		
-//        		image_writer.setColor(i, j, trace(r,MAX_RECURSIVE_DEPTH)); //Standard render
-        		image_writer.setColor(i, j, testTrace(r,MAX_RECURSIVE_DEPTH)); //For photon mapping stuff (Direct visualisation)
+        		image_writer.setColor(i, j, testTrace(r,MAX_RECURSIVE_DEPTH)); //Standard render
         	}
-//        	System.out.println("Row " + (j+1) + "/" + h + " completed!");
+//        	System.out.println("Row " + (j+1) + "/" + (int)h + " completed!");
         }
 	}
 	
 	public void renderCausticsPhotonMap(WritableImage img) {
-		int w=(int) img.getWidth(), h=(int) img.getHeight();
+		double w= img.getWidth(), h= img.getHeight();
         PixelWriter image_writer = img.getPixelWriter();
 //        light = new Point(lightX,y_axis/2,z_axis/2);
-        camera = new Point(w/2.0f,h/2.0f,-1000f);
+        camera = new Point((x_axis)/2.0f,(y_axis)/2.0f,-10f);
                 
         for (int j=0; j<h; j++) {
         	for (int i=0; i<w; i++) {
-        		// Creating the ray //
-        		Vector rayVec = new Vector(i-camera.x(), j-camera.y(), -camera.z());
+//        		Vector rayVec = new Vector(i-camera.x(), j-camera.y(), -camera.z());
+    			double x = ((double)i/w)*x_axis;
+    			double y = ((double)j/h)*y_axis;
+//    			System.out.println(i + " " + j + " -> " + x + " " + y);
+    			Vector rayVec = new Vector(x-camera.x(), y-camera.y(), -camera.z());
         		rayVec.normalise();
-        		Ray r = new Ray(new Point(i,j,-1), rayVec); //Persepective projection
+//        		Ray r = new Ray(new Point(i,j,-1), rayVec); //Persepective projection
+        		Ray r = new Ray(new Point(x,y,0),rayVec);
         		
-//        		image_writer.setColor(i, j, trace(r,MAX_RECURSIVE_DEPTH)); //Standard render
-        		image_writer.setColor(i, j, traceCausticsMap(r,MAX_RECURSIVE_DEPTH)); //For photon mapping stuff (Direct visualisation)
+        		image_writer.setColor(i, j, traceCausticsMap(r,MAX_RECURSIVE_DEPTH)); //Standard render
         	}
-//        	System.out.println("Row " + (j+1) + "/" + h + " completed!");
+//        	System.out.println("Row " + (j+1) + "/" + (int)h + " completed!");
         }
 	}
 	
@@ -1135,7 +1162,7 @@ public class PhotonMapper extends Application {
 		if (t >= 0) {
 			Point intersection = r.getPoint(t);
 			ArrayList<Photon> nearestNeighbours = new ArrayList<Photon>();
-			Sphere s = new Sphere(intersection,1);
+			Sphere s = new Sphere(intersection,0.05f);
 //			Sphere s = new Sphere(intersection,PHOTON_SEARCH_RADIUS);
 			int N = 1;
 			globalMap.getNearestNeighbours(s, nearestNeighbours, N);
@@ -1162,6 +1189,7 @@ public class PhotonMapper extends Application {
 //			return currentTracable.getColor(); //Debugging -> Just returns colour of object it intersects
 		}
 		
+		currentColor.normalise();
 		//Colour normalisation between 0 and 1
 		double red = currentColor.dx();
 		double green = currentColor.dy();
@@ -1204,7 +1232,7 @@ public class PhotonMapper extends Application {
 		if (t >= 0) {
 			Point intersection = r.getPoint(t);
 			ArrayList<Photon> nearestNeighbours = new ArrayList<Photon>();
-			Sphere s = new Sphere(intersection,1);
+			Sphere s = new Sphere(intersection,0.05f);
 //			Sphere s = new Sphere(intersection,PHOTON_SEARCH_RADIUS);
 			int N = 1;
 			causticsMap.getNearestNeighbours(s, nearestNeighbours, N);
@@ -1231,6 +1259,7 @@ public class PhotonMapper extends Application {
 //			return currentTracable.getColor(); //Debugging -> Just returns colour of object it intersects
 		}
 		
+		currentColor.normalise();
 		//Colour normalisation between 0 and 1
 		double red = currentColor.dx();
 		double green = currentColor.dy();
