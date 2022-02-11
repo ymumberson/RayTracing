@@ -317,21 +317,22 @@ public class PhotonMapper extends Application {
 //			pow = (LIGHT_AMOUNT/numPhotons) * LARGE_SCENE_LIGHT_SCALAR; //Because normal scene is 3x bigger
 //		}
 		
-		double pow = LIGHT_AMOUNT/numPhotons;
+		double pow = LIGHT_AMOUNT/(numPhotons*100);
+//		double pow = 1/numPhotons;
 		
 		//Fire rays at reflective sphere
 		Point target;
 		Vector dir;
 		Ray r;
 		Vector rayPower = new Vector(pow,pow,pow);
-//		for (int i=0; i<numPhotons/2; i++) {
-//			target = reflectiveSphere.c().add(reflectiveSphere.generateRandomUnitPoint()
-//					.multiply(reflectiveSphere.getRadius()));
-//			dir = new Vector(target.subtract(light));
-//			dir.normalise();
-//			r = new Ray(light,dir);
-//			traceLightRay(r,rayPower,causticsPhotons);
-//		}
+		for (int i=0; i<numPhotons/2; i++) {
+			target = reflectiveSphere.c().add(reflectiveSphere.generateRandomUnitPoint()
+					.multiply(reflectiveSphere.getRadius()));
+			dir = new Vector(target.subtract(light));
+			dir.normalise();
+			r = new Ray(light,dir);
+			traceLightRay(r,rayPower,causticsPhotons);
+		}
 		
 		//Fire rays at refractive sphere
 		for (int i=0; i<numPhotons/2; i++) {
@@ -588,23 +589,17 @@ public class PhotonMapper extends Application {
 			Photon p;
 			for (int i=0; i<globalPhotons.size(); i++) {
 				p = globalPhotons.get(i);
-//				if (p.isIlluminationPhoton() || p.isShadowPhoton()) {
-//					directHeap.insert(p, intersection.euclideanDistance(p.getPosition()));
-//					count++;
-//				}
-//				if (count >= numDirectPhotons) {
-//					break;
-//				}
-				directHeap.insert(p, intersection.euclideanDistance(p.getPosition()));
-				count++;
+				if (p.isIlluminationPhoton() || p.isShadowPhoton()) {
+					directHeap.insert(p, intersection.euclideanDistance(p.getPosition()));
+					count++;
+				}
 				if (count >= numDirectPhotons) {
 					break;
 				}
 			}
 			
 			//Find nearest N photons (shadow or illumination only)
-//			globalMap.getNearestNeighboursDirectIllumination(intersection, directHeap);
-			globalMap.getNearestNeighbours(intersection, directHeap);
+			globalMap.getNearestNeighboursDirectIllumination(intersection, directHeap);
 			int nI = directHeap.getNumIlluminationPhotons();
 //			int nS = directHeap.getNumShadowPhotons();
 //			System.out.println(nI + " | " + nS + " | " + directHeap.getSize() + " | " + directHeap.getMaxSize() + " | " + directHeap.testSize());
@@ -682,34 +677,34 @@ public class PhotonMapper extends Application {
 			 * TODO Need to implement the caustics photon map
 			 */
 			Vector caustics = new Vector(0,0,0);
-//			int numPhots = 10;
-//			PhotonMaxHeap heap = new PhotonMaxHeap(numPhots);
-//			for (int i=0; i<numPhots; i++) {
-//				Photon p2 = causticsPhotons.get(i);
-//				heap.insert(p2, intersection.euclideanDistance(p2.getPosition()));
-//			}
-//			
-//			causticsMap.getNearestNeighbours(intersection,heap);
-//			
-//			Photon[] ls = heap.getPhotons();
-//			double[] distLs = heap.getDistances();
-////			System.out.println(heap);
-//			Vector tempV = new Vector(0,0,0);
-//			Vector normal = currentTracable.getNormal(intersection);
-//			float k=0.01f;
-//			double weight;
-//			Photon p3;
-//			double maxDist = heap.getMaxDistance();
-//			for (int i=0; i<ls.length; i++) {
-//				p3 = ls[i];
-//				weight = 1-(distLs[i]/(k*maxDist));
-//				if (p3.getIncidentDirection() == normal) {tempV = tempV.add(p3.getEnergy().multiply(weight));}
-////				temp = temp.add(p.getEnergy());
-//			}
-////			System.out.println(temp);
-////			Vector vec = tempV.divide(Math.PI * maxDist*maxDist);
-//			Vector vec = tempV.divide(Math.PI * maxDist*maxDist * (1-2/(3*k)));
-//			caustics = vec.multiply(new Vector(currentTracable.getColor()));
+			int numPhots = 60;
+			PhotonMaxHeap heap = new PhotonMaxHeap(numPhots);
+			for (int i=0; i<numPhots; i++) {
+				Photon p2 = causticsPhotons.get(i);
+				heap.insert(p2, intersection.euclideanDistance(p2.getPosition()));
+			}
+			
+			causticsMap.getNearestNeighbours(intersection,heap);
+			
+			Photon[] ls = heap.getPhotons();
+			double[] distLs = heap.getDistances();
+//			System.out.println(heap);
+			Vector tempV = new Vector(0,0,0);
+			Vector normal = currentTracable.getNormal(intersection);
+			float k=0.01f;
+			double weight;
+			Photon p3;
+			double maxDist = heap.getMaxDistance();
+			for (int i=0; i<ls.length; i++) {
+				p3 = ls[i];
+				weight = 1-(distLs[i]/(k*maxDist));
+				if (p3.getIncidentDirection() == normal) {tempV = tempV.add(p3.getEnergy().multiply(weight));}
+//				temp = temp.add(p.getEnergy());
+			}
+//			System.out.println(temp);
+//			Vector vec = tempV.divide(Math.PI * maxDist*maxDist);
+			Vector vec = tempV.divide(Math.PI * maxDist*maxDist * (1-2/(3*k)));
+			caustics = vec.multiply(new Vector(currentTracable.getColor()));
 			
 			
 			
