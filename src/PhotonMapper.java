@@ -259,7 +259,7 @@ public class PhotonMapper extends Application {
 			double z = Math.random() * z_axis;
 //			double z = 250;
 //			double z = z_axis;
-			arr[i] = new Photon(new Point(x,y,z), new Vector(0,0,0), new Vector(Math.random(),Math.random(),Math.random()));
+			arr[i] = new Photon(new Point(x,y,z), new Vector(0,0,0), new Vector(0,0,0), new Vector(Math.random(),Math.random(),Math.random()));
 //			System.out.println(arr[i]);
 		}
 		globalMap.build(arr, 30, 1);
@@ -422,7 +422,7 @@ public class PhotonMapper extends Application {
 					numAbsorbed++;
 					absorbed = true;
 					if (hitTracable.isDiffuse()) {
-						Photon p = new Photon(intersection,hitTracable.getNormal(intersection),rayPower);
+						Photon p = new Photon(intersection,r.d(),hitTracable.getNormal(intersection),rayPower);
 						mapList.add(p);
 						numAdded++;
 					}
@@ -440,7 +440,7 @@ public class PhotonMapper extends Application {
 				//Only create illumination photon if surface is diffuse
 				if (hitTracable.isDiffuse()) {
 					//Creating illumination photon
-					Photon p = new Photon(intersection,hitTracable.getNormal(intersection),rayPower,true);
+					Photon p = new Photon(intersection,r.d(),hitTracable.getNormal(intersection),rayPower,true);
 					mapList.add(p);
 				}
 				
@@ -460,7 +460,7 @@ public class PhotonMapper extends Application {
 							if (nextTracable.isDiffuse()) {
 								//Create shadow photon at intersection point with negative power
 								Point intersectionPoint = r.getPoint(nextT);
-								Photon shadowP = new Photon(intersectionPoint,nextTracable.getNormal(intersectionPoint),rayPower.multiply(-1),false);
+								Photon shadowP = new Photon(intersectionPoint,r.d(),nextTracable.getNormal(intersectionPoint),rayPower.multiply(-1),false);
 								mapList.add(shadowP);
 							}
 						}
@@ -470,7 +470,7 @@ public class PhotonMapper extends Application {
 				//If not directly from light source then create a normal photon at intersection, with no shadow photon created
 				if (!absorbed && hitTracable.isDiffuse()) {
 					//Store photon at intersection
-					Photon p = new Photon(intersection,hitTracable.getNormal(intersection),rayPower);
+					Photon p = new Photon(intersection,r.d(),hitTracable.getNormal(intersection),rayPower);
 					mapList.add(p);
 					numAdded++;
 				}

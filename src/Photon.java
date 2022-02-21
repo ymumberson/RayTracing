@@ -7,14 +7,16 @@ public class Photon {
 	 * ie we may store direction as phy&theta, then recompute it as a vector in getDirection()
 	 */
 	private Point position;
+	private Vector incidentDirection;
 	private Vector surfaceNormal;
 	private Vector energy;
 	private boolean illuminationPhoton;
 	private boolean shadowPhoton;
 	
-	public Photon(Point position, Vector incidentDirection, Vector energy) {
+	public Photon(Point position, Vector incidentDirection, Vector surfaceNormal, Vector energy) {
 		this.position = position;
-		this.surfaceNormal = incidentDirection;
+		this.incidentDirection = incidentDirection;
+		this.surfaceNormal = surfaceNormal;
 		this.energy = energy;
 		this.shadowPhoton = false;
 		this.illuminationPhoton = false;
@@ -25,9 +27,10 @@ public class Photon {
 	 * if illuminated == false -> Shadow photon.
 	 * if illuminated == true -> illumination photon.
 	 */
-	public Photon(Point position, Vector incidentDirection, Vector energy, Boolean illuminated) {
+	public Photon(Point position, Vector incidentDirection, Vector surfaceNormal, Vector energy, Boolean illuminated) {
 		this.position = position;
-		this.surfaceNormal = incidentDirection;
+		this.incidentDirection = incidentDirection;
+		this.surfaceNormal = surfaceNormal;
 		this.energy = energy;
 		this.illuminationPhoton = illuminated;
 		this.shadowPhoton = !illuminated;
@@ -35,6 +38,10 @@ public class Photon {
 	
 	public Point getPosition() {
 		return position;
+	}
+	
+	public Vector getIncidentDirection() {
+		return incidentDirection;
 	}
 	
 	public Vector getSurfaceNormal() {
