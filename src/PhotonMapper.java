@@ -34,13 +34,11 @@ public class PhotonMapper extends Application {
     private long totalTime;
     private boolean USING_KD_TREES = false;
     private static int numMisses,numDiffuse,numSpecular,numRefract,numAbsorbed,numAdded;
-    private float PHOTON_SEARCH_RADIUS = 10;
-    private int NUM_PHOTONS_SEARCHING_FOR = 100;
+    private int NUM_PHOTONS_SEARCHING_FOR = 500;
     private boolean USING_MINI_SCENE = true;
 //    private float LIGHT_AMOUNT = 300f;
     private float LIGHT_AMOUNT = 200f;
-    private int LARGE_SCENE_LIGHT_SCALAR = 10;
-    private int NUM_LIGHT_RAYS = 10000;
+    private int NUM_LIGHT_RAYS = 20000;
     
     //Global photon map
     private ArrayList<Photon> globalPhotons = new ArrayList<Photon>();
@@ -469,14 +467,12 @@ public class PhotonMapper extends Application {
 					}
 				}
 			} else {
-				//If not directly from light source then create a normal photon at intersection
+				//If not directly from light source then create a normal photon at intersection, with no shadow photon created
 				if (!absorbed && hitTracable.isDiffuse()) {
 					//Store photon at intersection
 					Photon p = new Photon(intersection,hitTracable.getNormal(intersection),rayPower);
 					mapList.add(p);
 					numAdded++;
-					
-					//TODO Store shadow photon at second intersection
 				}
 			}
 			
@@ -618,7 +614,7 @@ public class PhotonMapper extends Application {
 					phot = ls[i];
 					weight = 1-(distLs[i]/(k*maxDist));
 //					System.out.println(distLs[i] + " / " + maxDist + " -> " + weight);
-					if (phot.getIncidentDirection() == normal) {temp = temp.add(phot.getEnergy().multiply(weight));} //Only add energy if normals the same
+					if (phot.getSurfaceNormal() == normal) {temp = temp.add(phot.getEnergy().multiply(weight));} //Only add energy if normals the same
 //					temp = temp.add(p.getEnergy()); //Add energy
 				}
 //				Vector vec = temp.divide(Math.PI * maxDist*maxDist * (1-2/(3*k)));
@@ -698,7 +694,7 @@ public class PhotonMapper extends Application {
 			for (int i=0; i<ls.length; i++) {
 				p3 = ls[i];
 				weight = 1-(distLs[i]/(k*maxDist));
-				if (p3.getIncidentDirection() == normal) {tempV = tempV.add(p3.getEnergy().multiply(weight));}
+				if (p3.getSurfaceNormal() == normal) {tempV = tempV.add(p3.getEnergy().multiply(weight));}
 //				temp = temp.add(p.getEnergy());
 			}
 //			System.out.println(temp);
@@ -712,32 +708,32 @@ public class PhotonMapper extends Application {
 			 * Part 4: Multiple diffuse reflections
 			 */
 			Vector diffuse = new Vector(0,0,0);
-//			if (currentTracable.isDiffuse()) {
-//				int numRays = 10;
-//				float diffusePerc = 0.35f;
-////				currentColor = currentColor.multiply(1-diffusePerc);
-//				for (int i=0; i<numRays; i++) {
-////					diffuse = diffuse.add(diffuseReflect(currentTracable,diffuse,intersection,diffusePerc/numRays,recursiveDepth-1));
-//					Vector diffuseDir = this.calculateDiffuseDir(currentTracable, r, intersection);
-//					Ray diffuseR = new Ray(intersection, diffuseDir);
-//					
-//					Tracable hitTracable = tracableObjects.get(0);
-//					double t2 = -1;
-//					for (Object o: tracableObjects) {
-//						Tracable temp = (Tracable) o;
-//						double tempT = temp.getIntersect(diffuseR);
-////						if (tempT > t && !Double.isNaN(tempT) && !Double.isInfinite(tempT)) {
-//						if ((t2 < 0 && tempT > t2) || (t2 >= 0 && tempT < t2 && tempT >= 0)) {
-//							//System.out.println("replacing t:" + t + " with tempT:" + tempT);
-//							t2 = tempT;
-//							hitTracable = temp;
-//						}
-//					}
-//					if (t2 >= 0 && hitTracable.isDiffuse()) {
-//						diffuse = diffuse.add(new Vector(hitTracable.getColor()).multiply(diffusePerc).divide(numRays));
-//					}
-//				}
-//			}
+			if (currentTracable.isDiffuse()) {
+				int numRays = 10;
+				float diffusePerc = 0.35f;
+//				currentColor = currentColor.multiply(1-diffusePerc);
+				for (int i=0; i<numRays; i++) {
+//					diffuse = diffuse.add(diffuseReflect(currentTracable,diffuse,intersection,diffusePerc/numRays,recursiveDepth-1));
+					Vector diffuseDir = this.calculateDiffuseDir(currentTracable, r, intersection);
+					Ray diffuseR = new Ray(intersection, diffuseDir);
+					
+					Tracable hitTracable = tracableObjects.get(0);
+					double t2 = -1;
+					for (Object o: tracableObjects) {
+						Tracable temp = (Tracable) o;
+						double tempT = temp.getIntersect(diffuseR);
+//						if (tempT > t && !Double.isNaN(tempT) && !Double.isInfinite(tempT)) {
+						if ((t2 < 0 && tempT > t2) || (t2 >= 0 && tempT < t2 && tempT >= 0)) {
+							//System.out.println("replacing t:" + t + " with tempT:" + tempT);
+							t2 = tempT;
+							hitTracable = temp;
+						}
+					}
+					if (t2 >= 0 && hitTracable.isDiffuse()) {
+						diffuse = diffuse.add(new Vector(hitTracable.getColor()).multiply(diffusePerc).divide(numRays));
+					}
+				}
+			}
 			
 			
 			//Colour is sum of components
@@ -854,7 +850,7 @@ public class PhotonMapper extends Application {
 				Vector temp = new Vector(0,0,0);
 				Vector normal = currentTracable.getNormal(intersection);
 				for (Photon p: ls) {
-					if (p.getIncidentDirection() == normal) {temp = temp.add(p.getEnergy());}
+					if (p.getSurfaceNormal() == normal) {temp = temp.add(p.getEnergy());}
 //					temp = temp.add(p.getEnergy());
 				}
 //				System.out.println(temp);
