@@ -34,11 +34,11 @@ public class PhotonMapper extends Application {
     private long totalTime;
     private boolean USING_KD_TREES = false;
     private static int numMisses,numDiffuse,numSpecular,numRefract,numAbsorbed,numAdded;
-    private int NUM_PHOTONS_SEARCHING_FOR = 500;
+    private int NUM_PHOTONS_SEARCHING_FOR = 100;
     private boolean USING_MINI_SCENE = true;
 //    private float LIGHT_AMOUNT = 300f;
     private float LIGHT_AMOUNT = 200f;
-    private int NUM_LIGHT_RAYS = 20000;
+    private int NUM_LIGHT_RAYS = 10000;
     
     //Global photon map
     private ArrayList<Photon> globalPhotons = new ArrayList<Photon>();
@@ -495,19 +495,28 @@ public class PhotonMapper extends Application {
 //        		//Super Sampling (Not adaptive so quite slow) -> Value for n => n*n samples
         		int n = SAMPLES_PER_PIXEL;
         		if (n > 1) { //ie if super sampling
-            		float step = 1f/n;
+        			double i1 = ((double)i/w)*x_axis;
+        			double j1 = ((double)j/h)*y_axis;
+//            		float step = 1f/n;
+        			float xWidth = (float)w/x_axis;
+        			float yWidth = (float)h/y_axis;
+        			float xStep = xWidth/n;
+        			float yStep = yWidth/n;
             		float redAcc = 0;
             		float greenAcc = 0;
             		float blueAcc = 0;
-            		float upperBound = n/2f;
-            		for (float x=-upperBound; x<upperBound; x++) {
-            			double i2 = i+x*step;
-            			for (float y=-upperBound; y<upperBound; y++) {
-            				double j2 = j+y*step;
+//            		float upperBound = n/2f;
+            		float xUpper = n/(2*xWidth);
+            		float yUpper = n/(2*yWidth);
+            		for (float x=-xUpper; x<xUpper; x++) {
+            			double i2 = i1+x*xStep;
+            			for (float y=-yUpper; y<yUpper; y++) {
+            				double j2 = j1+y*yStep;
             				
-            				Vector rayVec2 = new Vector(i2+0.5-camera.x(), j2+0.5-camera.y(), -camera.z());
+//            				Vector rayVec2 = new Vector(i2+0.5-camera.x(), j2+0.5-camera.y(), -camera.z());
+            				Vector rayVec2 = new Vector(i2-camera.x(), j2-camera.y(), -camera.z());
                     		rayVec2.normalise();
-                    		Ray r2 = new Ray(new Point(i2,j2,-1), rayVec2);
+                    		Ray r2 = new Ray(new Point(i2,j2,0), rayVec2);
                     		Color c = trace(r2, MAX_RECURSIVE_DEPTH);
                     		redAcc += c.getRed();
                     		greenAcc += c.getGreen();
@@ -577,7 +586,8 @@ public class PhotonMapper extends Application {
 			 * TODO Currently not sending out shadow rays at borders, and instead averaging out the radiance
 			 */
 			Vector direct = new Vector(0,0,0);
-			int numDirectPhotons = 500;
+//			int numDirectPhotons = 100; //Using only 100 photons
+			int numDirectPhotons = NUM_PHOTONS_SEARCHING_FOR;
 			PhotonMaxHeap directHeap = new PhotonMaxHeap(numDirectPhotons);
 			
 			//Initialise heap with first N photons (shadow or illumination only)
@@ -595,31 +605,16 @@ public class PhotonMapper extends Application {
 			}
 			
 			//Find nearest N photons (shadow or illumination only)
-			globalMap.getNearestNeighboursDirectIllumination(intersection, directHeap);
+			globalMap.getNearestNeighboursDirectIllumination(intersection, currentTracable.getNormal(intersection), directHeap);
+			//globalMap.getNearestNeighboursDirectIllumination(intersection, directHeap);
 			int nI = directHeap.getNumIlluminationPhotons();
 //			int nS = directHeap.getNumShadowPhotons();
 //			System.out.println(nI + " | " + nS + " | " + directHeap.getSize() + " | " + directHeap.getMaxSize() + " | " + directHeap.testSize());
 			
 			if (nI > 0) { //Only illumination photon nearby
-				Photon[] ls = directHeap.getPhotons();
-				double[] distLs = directHeap.getDistances();
-//				System.out.println(heap);
-				Vector temp = new Vector(0,0,0);
-				Vector normal = currentTracable.getNormal(intersection);
-				double maxDist = directHeap.getMaxDistance();
 				float k = 1;
-				double weight;
-				Photon phot;
-				for (int i=0; i<ls.length; i++) {
-					phot = ls[i];
-					weight = 1-(distLs[i]/(k*maxDist));
-//					System.out.println(distLs[i] + " / " + maxDist + " -> " + weight);
-					if (phot.getSurfaceNormal() == normal) {temp = temp.add(phot.getEnergy().multiply(weight));} //Only add energy if normals the same
-//					temp = temp.add(p.getEnergy()); //Add energy
-				}
-//				Vector vec = temp.divide(Math.PI * maxDist*maxDist * (1-2/(3*k)));
-				Vector vec = temp.divide(Math.PI * maxDist*maxDist * (1-2/(3*k))); //"normalised"
-				direct = vec.multiply(new Vector(currentTracable.getColor()));
+				direct = directHeap.getAverageColourConeFilter(k).multiply(new Vector(currentTracable.getColor())); //Cone filter
+//				direct = directHeap.getAverageColour().multiply(new Vector(currentTracable.getColor())); //No filtering
 			}
 			
 			
@@ -670,7 +665,6 @@ public class PhotonMapper extends Application {
 			
 			/*
 			 * Part 3: Caustics
-			 * TODO Need to implement the caustics photon map
 			 */
 			Vector caustics = new Vector(0,0,0);
 			int numPhots = 60;
@@ -682,25 +676,28 @@ public class PhotonMapper extends Application {
 			
 			causticsMap.getNearestNeighbours(intersection,heap);
 			
-			Photon[] ls = heap.getPhotons();
-			double[] distLs = heap.getDistances();
-//			System.out.println(heap);
-			Vector tempV = new Vector(0,0,0);
-			Vector normal = currentTracable.getNormal(intersection);
-			float k=0.01f;
-			double weight;
-			Photon p3;
-			double maxDist = heap.getMaxDistance();
-			for (int i=0; i<ls.length; i++) {
-				p3 = ls[i];
-				weight = 1-(distLs[i]/(k*maxDist));
-				if (p3.getSurfaceNormal() == normal) {tempV = tempV.add(p3.getEnergy().multiply(weight));}
-//				temp = temp.add(p.getEnergy());
-			}
-//			System.out.println(temp);
-//			Vector vec = tempV.divide(Math.PI * maxDist*maxDist);
-			Vector vec = tempV.divide(Math.PI * maxDist*maxDist * (1-2/(3*k)));
-			caustics = vec.multiply(new Vector(currentTracable.getColor()));
+//			Photon[] ls = heap.getPhotons();
+//			double[] distLs = heap.getDistances();
+////			System.out.println(heap);
+//			Vector tempV = new Vector(0,0,0);
+//			Vector normal = currentTracable.getNormal(intersection);
+//			float k=0.01f;
+//			double weight;
+//			Photon p3;
+//			double maxDist = heap.getMaxDistance();
+//			for (int i=0; i<ls.length; i++) {
+//				p3 = ls[i];
+//				weight = 1-(distLs[i]/(k*maxDist));
+//				if (p3.getSurfaceNormal() == normal) {tempV = tempV.add(p3.getEnergy().multiply(weight));}
+////				temp = temp.add(p.getEnergy());
+//			}
+////			System.out.println(temp);
+////			Vector vec = tempV.divide(Math.PI * maxDist*maxDist);
+//			Vector vec = tempV.divide(Math.PI * maxDist*maxDist * (1-2/(3*k)));
+//			caustics = vec.multiply(new Vector(currentTracable.getColor()));
+			
+			float k = 1;
+			caustics = heap.getAverageColourConeFilter(k).multiply(new Vector(currentTracable.getColor()));
 			
 			
 			
@@ -708,32 +705,32 @@ public class PhotonMapper extends Application {
 			 * Part 4: Multiple diffuse reflections
 			 */
 			Vector diffuse = new Vector(0,0,0);
-			if (currentTracable.isDiffuse()) {
-				int numRays = 10;
-				float diffusePerc = 0.35f;
-//				currentColor = currentColor.multiply(1-diffusePerc);
-				for (int i=0; i<numRays; i++) {
-//					diffuse = diffuse.add(diffuseReflect(currentTracable,diffuse,intersection,diffusePerc/numRays,recursiveDepth-1));
-					Vector diffuseDir = this.calculateDiffuseDir(currentTracable, r, intersection);
-					Ray diffuseR = new Ray(intersection, diffuseDir);
-					
-					Tracable hitTracable = tracableObjects.get(0);
-					double t2 = -1;
-					for (Object o: tracableObjects) {
-						Tracable temp = (Tracable) o;
-						double tempT = temp.getIntersect(diffuseR);
-//						if (tempT > t && !Double.isNaN(tempT) && !Double.isInfinite(tempT)) {
-						if ((t2 < 0 && tempT > t2) || (t2 >= 0 && tempT < t2 && tempT >= 0)) {
-							//System.out.println("replacing t:" + t + " with tempT:" + tempT);
-							t2 = tempT;
-							hitTracable = temp;
-						}
-					}
-					if (t2 >= 0 && hitTracable.isDiffuse()) {
-						diffuse = diffuse.add(new Vector(hitTracable.getColor()).multiply(diffusePerc).divide(numRays));
-					}
-				}
-			}
+//			if (currentTracable.isDiffuse()) {
+//				int numRays = 10;
+//				float diffusePerc = 0.35f;
+////				currentColor = currentColor.multiply(1-diffusePerc);
+//				for (int i=0; i<numRays; i++) {
+////					diffuse = diffuse.add(diffuseReflect(currentTracable,diffuse,intersection,diffusePerc/numRays,recursiveDepth-1));
+//					Vector diffuseDir = this.calculateDiffuseDir(currentTracable, r, intersection);
+//					Ray diffuseR = new Ray(intersection, diffuseDir);
+//					
+//					Tracable hitTracable = tracableObjects.get(0);
+//					double t2 = -1;
+//					for (Object o: tracableObjects) {
+//						Tracable temp = (Tracable) o;
+//						double tempT = temp.getIntersect(diffuseR);
+////						if (tempT > t && !Double.isNaN(tempT) && !Double.isInfinite(tempT)) {
+//						if ((t2 < 0 && tempT > t2) || (t2 >= 0 && tempT < t2 && tempT >= 0)) {
+//							//System.out.println("replacing t:" + t + " with tempT:" + tempT);
+//							t2 = tempT;
+//							hitTracable = temp;
+//						}
+//					}
+//					if (t2 >= 0 && hitTracable.isDiffuse()) {
+//						diffuse = diffuse.add(new Vector(hitTracable.getColor()).multiply(diffusePerc).divide(numRays));
+//					}
+//				}
+//			}
 			
 			
 			//Colour is sum of components

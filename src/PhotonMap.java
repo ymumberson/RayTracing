@@ -215,6 +215,33 @@ public class PhotonMap extends AABB {
 		}
 	}
 	
+	/**
+	 * Assumes heap has been initialised with N photons
+	 * @param p
+	 * @param n
+	 * @param heap
+	 */
+	public void getNearestNeighbours(Point p, Vector n, PhotonMaxHeap heap) {
+		if (this.isLeaf) {
+			for (Photon photon: photons) {
+				if (photon.getSurfaceNormal() != n) continue; //Skip photon if surface normals don't match
+				double dist = p.euclideanDistance(photon.getPosition());
+				if (dist < heap.getMaxDistance()) {
+					heap.insert(photon, dist);
+				}
+			}
+		} else {
+			if (left.euclidenDistance(p) < heap.getMaxDistance()) {
+				left.getNearestNeighbours(p,heap);
+			}
+			if (right != null && right.euclidenDistance(p) < heap.getMaxDistance()) {
+				right.getNearestNeighbours(p,heap);
+			}
+		}
+	}
+	
+	
+	
 	/*
 	 * Gets nearest N neighbours but only includes shadow photons and illumination photons
 	 */
@@ -222,6 +249,29 @@ public class PhotonMap extends AABB {
 		if (this.isLeaf) {
 			for (Photon photon: photons) {
 				if (photon.isIlluminationPhoton() || photon.isShadowPhoton()) {
+					double dist = p.euclideanDistance(photon.getPosition());
+					if (dist < heap.getMaxDistance()) {
+						heap.insert(photon, dist);
+					}
+				}
+			}
+		} else {
+			if (left.euclidenDistance(p) < heap.getMaxDistance()) {
+				left.getNearestNeighboursDirectIllumination(p,heap);
+			}
+			if (right != null && right.euclidenDistance(p) < heap.getMaxDistance()) {
+				right.getNearestNeighboursDirectIllumination(p,heap);
+			}
+		}
+	}
+	
+	/*
+	 * Gets nearest N neighbours but only includes shadow photons and illumination photons
+	 */
+	public void getNearestNeighboursDirectIllumination(Point p, Vector n, PhotonMaxHeap heap) {
+		if (this.isLeaf) {
+			for (Photon photon: photons) {
+				if ((photon.isIlluminationPhoton() || photon.isShadowPhoton()) && (photon.getSurfaceNormal() == n)) {
 					double dist = p.euclideanDistance(photon.getPosition());
 					if (dist < heap.getMaxDistance()) {
 						heap.insert(photon, dist);
@@ -384,8 +434,8 @@ public class PhotonMap extends AABB {
 	public static void testOutOfBounds() {
 		PhotonMap map = new PhotonMap(new Point(0,0,0), new Point(10,10,10));
 		Photon[] ps = new Photon[2];
-		ps[0] = new Photon(new Point(0,-0.0000000001,0),new Vector(0,0,0), new Vector(0,0,0));
-		ps[1] = new Photon(new Point(5,5,10.000000001),new Vector(0,0,0), new Vector(0,0,0));
+		ps[0] = new Photon(new Point(0,-0.0000000001,0), new Vector(0,0,0), new Vector(0,0,0), new Vector(0,0,0));
+		ps[1] = new Photon(new Point(5,5,10.000000001), new Vector(0,0,0), new Vector(0,0,0), new Vector(0,0,0));
 		map.build(ps, 10, 1);
 		ArrayList<Photon> ls = new ArrayList<Photon>();
 		Sphere s = new Sphere(new Point(0,0,0),1);

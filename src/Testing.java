@@ -21,7 +21,85 @@ public class Testing {
 //		kdTreeTesting();
 //		Testing t = new Testing();
 //		t.concurrentTesting();
-		vectorTesting();
+//		vectorTesting();
+//		SphericalCoordinateSystemTesting();
+		testingT();
+	}
+	
+	public static void testingT() {
+		for (int i=0; i<10; i++) {
+			float u = (float) Math.random();
+			float v = (float) Math.random();
+			System.out.println("(" + u + "," + v + ")");
+			T(u,v);
+		}
+	}
+	
+	public static void SphericalCoordinateSystemTesting() {
+		SphereicalCoordinateSystemWikipedia();
+		SphericalCoordinateSystemJensen();
+	}
+	
+	public static void SphericalCoordinateSystemJensen() {
+		System.out.println("Jensen");
+		long start = System.nanoTime();
+		Vector direction = new Vector(0.5,0.4,0.3);
+		direction.normalise();
+		System.out.println(direction);
+		double phi = 255*(Math.atan2(direction.dy(), direction.dz())+Math.PI) / (2*Math.PI);
+		double theta = 255*(Math.acos(direction.dx())) / Math.PI;
+		System.out.println("Phi: " + phi);
+		System.out.println("Theta: " + theta);
+		
+		
+		long finish = System.nanoTime();
+		System.out.println("Duration: " + (finish-start) + "ns == " + ((finish-start)/1000000f) + "ms.");
+		System.out.println();
+	}
+	
+	public static void SphereicalCoordinateSystemWikipedia() {
+		System.out.println("Wikipedia");
+		long start = System.nanoTime();
+		Vector direction = new Vector(0.5,0.4,0.3);
+		direction.normalise();
+		System.out.println(direction);
+		
+		double phi;
+		double theta = Math.atan((Math.sqrt(direction.dx()*direction.dx() + direction.dy()*direction.dy()))/direction.dz());
+		
+		if (direction.dx() > 0) {
+			phi = Math.atan(direction.dx()/direction.dy());
+		} else if (direction.dx() < 0 && direction.dy() >= 0) {
+			phi = Math.atan(direction.dx()/direction.dy()) + Math.PI;
+		} else if (direction.dx() < 0 && direction.dy() < 0) {
+			phi = Math.atan(direction.dx()/direction.dy()) - Math.PI;
+		}  else if (direction.dx() == 0 && direction.dy() > 0) {
+			phi = Math.PI/2f;
+		}  else if (direction.dx() == 0 && direction.dy() < 0) {
+			phi = -Math.PI/2f;
+		} else {
+			return;
+		}
+		
+		System.out.println("Phi: " + phi);
+		System.out.println("Theta: " + theta);
+		
+		float r = 1;
+		double y = r * Math.cos(phi) * Math.sin(theta);
+		double x = r * Math.sin(phi) * Math.sin(theta);
+		double z = r * Math.cos(theta);
+		Vector recalculatedDirection = new Vector(x,y,z);
+		recalculatedDirection.normalise();
+		System.out.println(recalculatedDirection);
+		long finish = System.nanoTime();
+		System.out.println("Duration: " + (finish-start) + "ns == " + ((finish-start)/1000000f) + "ms.");
+		System.out.println();
+	}
+	
+	public static void T(float u, float v) {
+		float theta = (float)Math.acos(Math.sqrt(1-u));
+		float sigma = (float)(2*Math.PI*v);
+		System.out.println("Theta: " + theta + "\nSigma: " + sigma);
 	}
 	
 	public static void vectorTesting() {

@@ -105,6 +105,34 @@ public class PhotonMaxHeap {
 		}
 	}
 	
+	/*
+	 * Not filtered
+	 */
+	public Vector getAverageColour() {
+		if (size <= 0) return new Vector(0,0,0);
+		Vector col = new Vector(0,0,0);
+		double maxDist = this.getMaxDistance();
+		for (int i=0; i<size; i++) {
+			col = col.add(photons[i].getEnergy());
+		}
+		return col.divide(Math.PI * maxDist * maxDist);
+	}
+	
+	/*
+	 * Uses cone filter
+	 */
+	public Vector getAverageColourConeFilter(float k) {
+		if (size <= 0) return new Vector(0,0,0);
+		double maxDist = this.getMaxDistance();
+		double weight;
+		Vector col = new Vector(0,0,0);
+		for (int i=0; i<size; i++) {
+			weight = 1-(distances[i]/(k*maxDist));
+			col = col.add(photons[i].getEnergy().multiply(weight));
+		}
+		return col.divide(Math.PI * maxDist * maxDist * (1-2/(3*k)));
+	}
+	
 	//Could return a smaller list than maxsize
 	public Photon[] getPhotons() {
 		return photons;
@@ -125,19 +153,19 @@ public class PhotonMaxHeap {
 	public static void main(String[] args) {
 		PhotonMaxHeap heap = new PhotonMaxHeap(10);
 		System.out.println(heap);
-		heap.insert(new Photon(new Point(1,1,1),new Vector(0,0,0), new Vector(0,0,0)),10);
+		heap.insert(new Photon(new Point(1,1,1), new Vector(0,0,0), new Vector(0,0,0), new Vector(0,0,0)),10);
 		System.out.println(heap);
-		heap.insert(new Photon(new Point(1,1,1),new Vector(0,0,0), new Vector(0,0,0)),5);
+		heap.insert(new Photon(new Point(1,1,1),new Vector(0,0,0), new Vector(0,0,0), new Vector(0,0,0)),5);
 		System.out.println(heap);
-		heap.insert(new Photon(new Point(1,1,1),new Vector(0,0,0), new Vector(0,0,0)),7);
+		heap.insert(new Photon(new Point(1,1,1),new Vector(0,0,0), new Vector(0,0,0), new Vector(0,0,0)),7);
 		System.out.println(heap);
-		heap.insert(new Photon(new Point(1,1,1),new Vector(0,0,0), new Vector(0,0,0)),2);
-		heap.insert(new Photon(new Point(1,1,1),new Vector(0,0,0), new Vector(0,0,0)),12);
-		heap.insert(new Photon(new Point(1,1,1),new Vector(0,0,0), new Vector(0,0,0)),1);
-		heap.insert(new Photon(new Point(1,1,1),new Vector(0,0,0), new Vector(0,0,0)),17);
-		heap.insert(new Photon(new Point(1,1,1),new Vector(0,0,0), new Vector(0,0,0)),8);
-		heap.insert(new Photon(new Point(1,1,1),new Vector(0,0,0), new Vector(0,0,0)),3);
-		heap.insert(new Photon(new Point(1,1,1),new Vector(0,0,0), new Vector(0,0,0)),11);
+		heap.insert(new Photon(new Point(1,1,1),new Vector(0,0,0), new Vector(0,0,0), new Vector(0,0,0)),2);
+		heap.insert(new Photon(new Point(1,1,1),new Vector(0,0,0), new Vector(0,0,0), new Vector(0,0,0)),12);
+		heap.insert(new Photon(new Point(1,1,1),new Vector(0,0,0), new Vector(0,0,0), new Vector(0,0,0)),1);
+		heap.insert(new Photon(new Point(1,1,1),new Vector(0,0,0), new Vector(0,0,0), new Vector(0,0,0)),17);
+		heap.insert(new Photon(new Point(1,1,1),new Vector(0,0,0), new Vector(0,0,0), new Vector(0,0,0)),8);
+		heap.insert(new Photon(new Point(1,1,1),new Vector(0,0,0), new Vector(0,0,0), new Vector(0,0,0)),3);
+		heap.insert(new Photon(new Point(1,1,1),new Vector(0,0,0), new Vector(0,0,0), new Vector(0,0,0)),11);
 		System.out.println(heap);
 		heap.removeMax();
 		System.out.println(heap);
