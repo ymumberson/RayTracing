@@ -44,7 +44,7 @@ public class PhotonMapper extends Application {
     //Max squared differences
     private float MAX_SEARCH_DISTANCE_DIRECT = 1f * 1f;
     private float MAX_SEARCH_DISTANCE_INDIRECT = MAX_SEARCH_DISTANCE_DIRECT;
-    private float MAX_SEARCH_DISTANCE_CAUSTICS = 0.1f*0.1f;
+    private float MAX_SEARCH_DISTANCE_CAUSTICS = 1f*1f;
     
     //Global photon map
     private ArrayList<Photon> globalPhotons = new ArrayList<Photon>();
@@ -576,7 +576,7 @@ public class PhotonMapper extends Application {
 				currentColor = calculateSpecular(r,intersection,currentTracable,recursiveDepth);
 			}
 			
-//			
+			
 //			/*
 //			 * Part 1: Direct Illumination
 //			 * TODO Currently not sending out shadow rays at borders, and instead averaging out the radiance
@@ -599,14 +599,16 @@ public class PhotonMapper extends Application {
 //			 * Part 3: Caustics
 //			 */
 //			Vector caustics = calculateCaustics(intersection, currentTracable);
+////			Vector caustics = new Vector(0,0,0);
 //			
 //			
 //			
 //			/*
 //			 * Part 4: Multiple diffuse reflections
 //			 */
+//			Vector diffuse = new Vector(0,0,0);
 ////			Vector diffuse = calculateIndirectIlluminationEstimate(intersection,currentTracable); //For estimate
-//			Vector diffuse = calculateIndirectIlluminationAccurate(r,intersection,currentTracable); //For accurate
+////			Vector diffuse = calculateIndirectIlluminationAccurate(r,intersection,currentTracable); //For accurate
 //			
 //			
 //			//Colour is sum of components
@@ -630,24 +632,28 @@ public class PhotonMapper extends Application {
 		Vector direct = new Vector(0,0,0);
 //		int numDirectPhotons = 100; //Using only 100 photons
 		int numDirectPhotons = NUM_PHOTONS_SEARCHING_FOR;
+		//long start1 = System.nanoTime();
 		PhotonMaxHeap directHeap = new PhotonMaxHeap(numDirectPhotons);
 		
 		//Initialise heap with first N photons (shadow or illumination only)
-//		int count = 0;
-//		Photon p;
-//		for (int i=0; i<globalPhotons.size(); i++) {
-//			p = globalPhotons.get(i);
-//			if (p.isIlluminationPhoton() || p.isShadowPhoton()) {
-//				directHeap.insert(p, intersection.euclideanDistance(p.getPosition()));
-//				count++;
-//			}
-//			if (count >= numDirectPhotons) {
-//				break;
-//			}
-//		}
+		int count = 0;
+		Photon p;
+		for (int i=0; i<globalPhotons.size(); i++) {
+			p = globalPhotons.get(i);
+			if (p.isIlluminationPhoton() || p.isShadowPhoton()) {
+				directHeap.insert(p, intersection.euclideanDistance(p.getPosition()));
+				count++;
+			}
+			if (count >= numDirectPhotons) {
+				break;
+			}
+		}
 		
 		//Find nearest N photons (shadow or illumination only)
 		globalMap.getNearestNeighboursDirectIllumination(intersection, currentTracable.getNormal(intersection), directHeap, this.MAX_SEARCH_DISTANCE_DIRECT);
+//		globalMap.getNearestNeighboursDirectIllumination(intersection, directHeap, this.MAX_SEARCH_DISTANCE_DIRECT);
+		//long finish1 = System.nanoTime();
+		//System.out.println((finish1-start1) + "ns.");
 //		globalMap.getNearestNeighboursDirectIllumination(intersection, directHeap,MAX_SEARCH_DISTANCE_DIRECT);
 		int nI = directHeap.getNumIlluminationPhotons();
 //		int nS = directHeap.getNumShadowPhotons();

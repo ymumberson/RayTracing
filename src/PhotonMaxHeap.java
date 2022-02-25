@@ -12,6 +12,8 @@ public class PhotonMaxHeap {
 		this.size = 0;
 		this.photons = new Photon[maxsize+1];
 		this.distances = new double[maxsize+1];
+//		distances[0] = Double.POSITIVE_INFINITY;
+		distances[0] = Integer.MAX_VALUE;
 	}
 	
 	private int parent(int i) {
@@ -84,11 +86,12 @@ public class PhotonMaxHeap {
 	 * @return
 	 */
 	public double getMaxDistanceOrInfinity() {
-		if (this.isFull()) {
-			return distances[0];
-		} else {
-			return Double.POSITIVE_INFINITY;
-		}
+//		if (this.isFull()) {
+//			return distances[0];
+//		} else {
+//			return Double.POSITIVE_INFINITY;
+//		}
+		return distances[0];
 	}
 	
 	public void removeMax() {
@@ -104,13 +107,21 @@ public class PhotonMaxHeap {
 		if (size < maxsize) {
 			photons[size] = p;
 			distances[size] = d;
-			
 			int current = size;
 			while (distances[current] > distances[parent(current)]) {
 				swap(current, parent(current));
 				current = parent(current);
 			}
-			size++;	
+			size++;
+			
+			//Assert heap property if full
+//			if (size == maxsize) {
+//				int current = size-1;
+//				while (distances[current] > distances[parent(current)]) {
+//					swap(current, parent(current));
+//					current = parent(current);
+//				}
+//			}
 		} else {
 			photons[0] = p;
 			distances[0] = d;

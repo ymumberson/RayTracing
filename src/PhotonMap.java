@@ -202,15 +202,15 @@ public class PhotonMap extends AABB {
 		if (this.isLeaf) {
 			for (Photon photon: photons) {
 				double dist2 = p.euclideanDistanceSquared(photon.getPosition());
-				if (dist2 <= maxDistance2 && dist2 < heap.getMaxDistanceOrInfinity()) {
+				if (dist2 <= maxDistance2 && dist2 < heap.getMaxDistance()) {
 					heap.insert(photon, dist2);
 				}
 			}
 		} else {
-			if (left.euclideanDistanceSquared(p) < heap.getMaxDistanceOrInfinity()) {
+			if (left.euclideanDistanceSquared(p) < heap.getMaxDistance()) {
 				left.getNearestNeighbours(p,heap,maxDistance2);
 			}
-			if (right != null && right.euclideanDistanceSquared(p) < heap.getMaxDistanceOrInfinity()) {
+			if (right != null && right.euclideanDistanceSquared(p) < heap.getMaxDistance()) {
 				right.getNearestNeighbours(p,heap,maxDistance2);
 			}
 		}
@@ -227,15 +227,15 @@ public class PhotonMap extends AABB {
 			for (Photon photon: photons) {
 				if (photon.getSurfaceNormal() != n) continue; //Skip photon if surface normals don't match
 				double dist = p.euclideanDistanceSquared(photon.getPosition());
-				if (dist <= maxDistance2 && dist < heap.getMaxDistanceOrInfinity()) {
+				if (dist <= maxDistance2 && dist < heap.getMaxDistance()) {
 					heap.insert(photon, dist);
 				}
 			}
 		} else {
-			if (left.euclideanDistanceSquared(p) < heap.getMaxDistanceOrInfinity()) {
+			if (left.euclideanDistanceSquared(p) < heap.getMaxDistance()) {
 				left.getNearestNeighbours(p,n,heap,maxDistance2);
 			}
-			if (right != null && right.euclideanDistanceSquared(p) < heap.getMaxDistanceOrInfinity()) {
+			if (right != null && right.euclideanDistanceSquared(p) < heap.getMaxDistance()) {
 				right.getNearestNeighbours(p,n,heap,maxDistance2);
 			}
 		}
@@ -251,16 +251,16 @@ public class PhotonMap extends AABB {
 			for (Photon photon: photons) {
 				if (photon.isIlluminationPhoton() || photon.isShadowPhoton()) {
 					double dist = p.euclideanDistanceSquared(photon.getPosition());
-					if (dist <= maxDistance2 && dist < heap.getMaxDistanceOrInfinity()) {
+					if (dist <= maxDistance2 && dist < heap.getMaxDistance()) {
 						heap.insert(photon, dist);
 					}
 				}
 			}
 		} else {
-			if (left.euclideanDistanceSquared(p) < heap.getMaxDistanceOrInfinity()) {
+			if (left.euclideanDistanceSquared(p) < heap.getMaxDistance()) {
 				left.getNearestNeighboursDirectIllumination(p,heap,maxDistance2);
 			}
-			if (right != null && right.euclideanDistanceSquared(p) < heap.getMaxDistanceOrInfinity()) {
+			if (right != null && right.euclideanDistanceSquared(p) < heap.getMaxDistance()) {
 				right.getNearestNeighboursDirectIllumination(p,heap,maxDistance2);
 			}
 		}
@@ -274,16 +274,17 @@ public class PhotonMap extends AABB {
 			for (Photon photon: photons) {
 				if ((photon.isIlluminationPhoton() || photon.isShadowPhoton()) && (photon.getSurfaceNormal() == n)) {
 					double dist = p.euclideanDistanceSquared(photon.getPosition());
-					if (dist <= maxDistance2 && dist < heap.getMaxDistanceOrInfinity()) {
+//					if (dist <= maxDistance2 && dist < heap.getMaxDistance()) {
+					if (dist < heap.getMaxDistance()) {
 						heap.insert(photon, dist);
 					}
 				}
 			}
 		} else {
-			if (left.euclideanDistanceSquared(p) < heap.getMaxDistanceOrInfinity()) {
+			if (left.euclideanDistanceSquared(p) < heap.getMaxDistance()) {
 				left.getNearestNeighboursDirectIllumination(p,n,heap,maxDistance2);
 			}
-			if (right != null && right.euclideanDistanceSquared(p) < heap.getMaxDistanceOrInfinity()) {
+			if (right != null && right.euclideanDistanceSquared(p) < heap.getMaxDistance()) {
 				right.getNearestNeighboursDirectIllumination(p,n,heap,maxDistance2);
 			}
 		}
