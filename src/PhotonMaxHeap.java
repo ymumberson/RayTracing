@@ -78,6 +78,19 @@ public class PhotonMaxHeap {
 		return distances[0];
 	}
 	
+	/**
+	 * If not full then distance is infinite because we'll accept any distance,
+	 * otherwise we only want photons which are closer if we already have N photons
+	 * @return
+	 */
+	public double getMaxDistanceOrInfinity() {
+		if (this.isFull()) {
+			return distances[0];
+		} else {
+			return Double.POSITIVE_INFINITY;
+		}
+	}
+	
 	public void removeMax() {
 		if (size <= 1) return; //Empty or contains one element
 		
@@ -148,6 +161,10 @@ public class PhotonMaxHeap {
 	
 	public int getSize() {
 		return size;
+	}
+	
+	public boolean isFull() {
+		return size == maxsize;
 	}
 	
 	public static void main(String[] args) {

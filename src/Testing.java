@@ -22,8 +22,8 @@ public class Testing {
 //		Testing t = new Testing();
 //		t.concurrentTesting();
 //		vectorTesting();
-//		SphericalCoordinateSystemTesting();
-		testingT();
+		SphericalCoordinateSystemTesting();
+//		testingT();
 	}
 	
 	public static void testingT() {
@@ -36,32 +36,35 @@ public class Testing {
 	}
 	
 	public static void SphericalCoordinateSystemTesting() {
-		SphereicalCoordinateSystemWikipedia();
-		SphericalCoordinateSystemJensen();
+		Vector v = new Vector(0.5,0.4,0.3);
+		SphereicalCoordinateSystemWikipedia(v);
+		SphericalCoordinateSystemJensen(v);
+		double theta = Math.acos(1-2*v.dx());
+		double phi = 2*Math.PI*v.dz();
+		System.out.println("Theta: " + theta + "\nPhi: " + phi);
+		System.out.println(getVec(theta,phi));
 	}
 	
-	public static void SphericalCoordinateSystemJensen() {
+	public static void SphericalCoordinateSystemJensen(Vector direction) {
 		System.out.println("Jensen");
 		long start = System.nanoTime();
-		Vector direction = new Vector(0.5,0.4,0.3);
-		direction.normalise();
 		System.out.println(direction);
 		double phi = 255*(Math.atan2(direction.dy(), direction.dz())+Math.PI) / (2*Math.PI);
 		double theta = 255*(Math.acos(direction.dx())) / Math.PI;
 		System.out.println("Phi: " + phi);
 		System.out.println("Theta: " + theta);
 		
+		Vector out = getVec(theta,phi);
+		System.out.println(out);
 		
 		long finish = System.nanoTime();
 		System.out.println("Duration: " + (finish-start) + "ns == " + ((finish-start)/1000000f) + "ms.");
 		System.out.println();
 	}
 	
-	public static void SphereicalCoordinateSystemWikipedia() {
+	public static void SphereicalCoordinateSystemWikipedia(Vector direction) {
 		System.out.println("Wikipedia");
 		long start = System.nanoTime();
-		Vector direction = new Vector(0.5,0.4,0.3);
-		direction.normalise();
 		System.out.println(direction);
 		
 		double phi;
@@ -84,16 +87,24 @@ public class Testing {
 		System.out.println("Phi: " + phi);
 		System.out.println("Theta: " + theta);
 		
-		float r = 1;
-		double y = r * Math.cos(phi) * Math.sin(theta);
-		double x = r * Math.sin(phi) * Math.sin(theta);
-		double z = r * Math.cos(theta);
-		Vector recalculatedDirection = new Vector(x,y,z);
-		recalculatedDirection.normalise();
+//		float r = 1;
+//		double y = r * Math.cos(phi) * Math.sin(theta);
+//		double x = r * Math.sin(phi) * Math.sin(theta);
+//		double z = r * Math.cos(theta);
+//		Vector recalculatedDirection = new Vector(x,y,z);
+//		recalculatedDirection.normalise();
+		Vector recalculatedDirection = getVec(theta,phi);
 		System.out.println(recalculatedDirection);
 		long finish = System.nanoTime();
 		System.out.println("Duration: " + (finish-start) + "ns == " + ((finish-start)/1000000f) + "ms.");
 		System.out.println();
+	}
+	
+	public static Vector getVec(double theta, double phi) {
+		double y = Math.cos(phi) * Math.sin(theta);
+		double z = Math.cos(theta);
+		double x = Math.sin(phi) * Math.sin(theta);
+		return new Vector(x,y,z);
 	}
 	
 	public static void T(float u, float v) {

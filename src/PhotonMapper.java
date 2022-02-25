@@ -41,6 +41,11 @@ public class PhotonMapper extends Application {
 //    private float LIGHT_AMOUNT = 100f;
     private int NUM_LIGHT_RAYS = 10000;
     
+    //Max squared differences
+    private float MAX_SEARCH_DISTANCE_DIRECT = 1f * 1f;
+    private float MAX_SEARCH_DISTANCE_INDIRECT = MAX_SEARCH_DISTANCE_DIRECT;
+    private float MAX_SEARCH_DISTANCE_CAUSTICS = 0.1f*0.1f;
+    
     //Global photon map
     private ArrayList<Photon> globalPhotons = new ArrayList<Photon>();
     private PhotonMap globalMap;
@@ -565,8 +570,8 @@ public class PhotonMapper extends Application {
 			if (currentTracable.isDiffuse()) {
 				currentColor = 
 						calculateDirectIllumination(intersection,currentTracable)
-						.add(calculateCaustics(intersection, currentTracable))
-						.add(calculateIndirectIlluminationAccurate(r,intersection,currentTracable));
+						.add(calculateCaustics(intersection, currentTracable));
+//						.add(calculateIndirectIlluminationAccurate(r,intersection,currentTracable));
 			} else {
 				currentColor = calculateSpecular(r,intersection,currentTracable,recursiveDepth);
 			}
@@ -628,22 +633,22 @@ public class PhotonMapper extends Application {
 		PhotonMaxHeap directHeap = new PhotonMaxHeap(numDirectPhotons);
 		
 		//Initialise heap with first N photons (shadow or illumination only)
-		int count = 0;
-		Photon p;
-		for (int i=0; i<globalPhotons.size(); i++) {
-			p = globalPhotons.get(i);
-			if (p.isIlluminationPhoton() || p.isShadowPhoton()) {
-				directHeap.insert(p, intersection.euclideanDistance(p.getPosition()));
-				count++;
-			}
-			if (count >= numDirectPhotons) {
-				break;
-			}
-		}
+//		int count = 0;
+//		Photon p;
+//		for (int i=0; i<globalPhotons.size(); i++) {
+//			p = globalPhotons.get(i);
+//			if (p.isIlluminationPhoton() || p.isShadowPhoton()) {
+//				directHeap.insert(p, intersection.euclideanDistance(p.getPosition()));
+//				count++;
+//			}
+//			if (count >= numDirectPhotons) {
+//				break;
+//			}
+//		}
 		
 		//Find nearest N photons (shadow or illumination only)
-		globalMap.getNearestNeighboursDirectIllumination(intersection, currentTracable.getNormal(intersection), directHeap);
-		//globalMap.getNearestNeighboursDirectIllumination(intersection, directHeap);
+//		globalMap.getNearestNeighboursDirectIllumination(intersection, currentTracable.getNormal(intersection), directHeap, this.MAX_SEARCH_DISTANCE_DIRECT);
+		globalMap.getNearestNeighboursDirectIllumination(intersection, directHeap,MAX_SEARCH_DISTANCE_DIRECT);
 		int nI = directHeap.getNumIlluminationPhotons();
 //		int nS = directHeap.getNumShadowPhotons();
 //		System.out.println(nI + " | " + nS + " | " + directHeap.getSize() + " | " + directHeap.getMaxSize() + " | " + directHeap.testSize());
@@ -706,12 +711,12 @@ public class PhotonMapper extends Application {
 		int numPhots = 60;
 		//Initialise heap
 		PhotonMaxHeap heap = new PhotonMaxHeap(numPhots);
-		for (int i=0; i<numPhots; i++) {
-			Photon p2 = causticsPhotons.get(i);
-			heap.insert(p2, intersection.euclideanDistance(p2.getPosition()));
-		}
+//		for (int i=0; i<numPhots; i++) {
+//			Photon p2 = causticsPhotons.get(i);
+//			heap.insert(p2, intersection.euclideanDistance(p2.getPosition()));
+//		}
 		
-		causticsMap.getNearestNeighbours(intersection,heap);
+		causticsMap.getNearestNeighbours(intersection,heap,MAX_SEARCH_DISTANCE_CAUSTICS);
 		
 		float k = 1;
 		caustics = heap.getAverageColourConeFilter(k).multiply(new Vector(currentTracable.getColor()));
@@ -719,24 +724,24 @@ public class PhotonMapper extends Application {
 		return caustics;
 	}
 	
-	public Vector calculateIndirectIlluminationEstimate(Point intersection, Tracable currentTracable) {
-		Vector diffuse = new Vector(0,0,0);
+	public Vector calculateRadianceFromGlobalPhotonMap(Point intersection, Tracable currentTracable) {
+		Vector radiance = new Vector(0,0,0);
 		//Estimate from global photon map
-		PhotonMaxHeap diffuseHeap = new PhotonMaxHeap(NUM_PHOTONS_SEARCHING_FOR);
-		for (int i=0; i<NUM_PHOTONS_SEARCHING_FOR; i++) {
-			Photon p2 = globalPhotons.get(i);
-			diffuseHeap.insert(p2, intersection.euclideanDistance(p2.getPosition()));
-		}
-		globalMap.getNearestNeighbours(intersection,diffuseHeap);
+		PhotonMaxHeap heap = new PhotonMaxHeap(NUM_PHOTONS_SEARCHING_FOR);
+//		for (int i=0; i<NUM_PHOTONS_SEARCHING_FOR; i++) {
+//			Photon p2 = globalPhotons.get(i);
+//			heap.insert(p2, intersection.euclideanDistance(p2.getPosition()));
+//		}
+		globalMap.getNearestNeighbours(intersection,heap,MAX_SEARCH_DISTANCE_INDIRECT);
 		float k = 1;
-		diffuse = diffuseHeap.getAverageColourConeFilter(k).multiply(new Vector(currentTracable.getColor()));
+		radiance = heap.getAverageColourConeFilter(k).multiply(new Vector(currentTracable.getColor()));
 		
-		return diffuse;
+		return radiance;
 	}
 	
 	public Vector calculateIndirectIlluminationAccurate(Ray r, Point intersection, Tracable currentTracable) {
 		Vector diffuse = new Vector(0,0,0);
-		int numRays = 10;
+		int numRays = 1;
 		float diffusePerc = 0.1f;
 //		currentColor = currentColor.multiply(1-diffusePerc);
 		for (int i=0; i<numRays; i++) {
@@ -757,7 +762,11 @@ public class PhotonMapper extends Application {
 				}
 			}
 			if (t2 >= 0 && hitTracable.isDiffuse()) {
-				diffuse = diffuse.add(new Vector(hitTracable.getColor()).multiply(diffusePerc).divide(numRays));
+				Point intersection2 = diffuseR.getPoint(t2);
+				Vector radiance = this.calculateRadianceFromGlobalPhotonMap(intersection2, hitTracable);
+				diffuse = diffuse.add(
+						(new Vector(currentTracable.getColor()).multiply(radiance)).divide(numRays));
+//				diffuse = diffuse.add(new Vector(hitTracable.getColor()).multiply(diffusePerc).divide(numRays));
 			}
 		}
 		
@@ -854,7 +863,7 @@ public class PhotonMapper extends Application {
 					heap.insert(p, intersection.euclideanDistance(p.getPosition()));
 				}
 				
-				globalMap.getNearestNeighbours(intersection,heap);
+				globalMap.getNearestNeighbours(intersection,heap,MAX_SEARCH_DISTANCE_DIRECT);
 				
 				Photon[] ls = heap.getPhotons();
 //				System.out.println(heap);

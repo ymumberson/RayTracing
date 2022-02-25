@@ -163,7 +163,11 @@ public class Point {
 	}
 	
 	public double euclideanDistance(Point p2) {
-		return Math.sqrt(Math.pow(this.x-p2.x,2)+Math.pow(this.y-p2.y,2)+Math.pow(this.z-p2.z,2));
+		return Math.sqrt(this.euclideanDistanceSquared(p2));
+	}
+	
+	public double euclideanDistanceSquared(Point p2) {
+		return Math.pow(this.x-p2.x,2)+Math.pow(this.y-p2.y,2)+Math.pow(this.z-p2.z,2);
 	}
 	
 	/**
