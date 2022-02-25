@@ -647,8 +647,8 @@ public class PhotonMapper extends Application {
 //		}
 		
 		//Find nearest N photons (shadow or illumination only)
-//		globalMap.getNearestNeighboursDirectIllumination(intersection, currentTracable.getNormal(intersection), directHeap, this.MAX_SEARCH_DISTANCE_DIRECT);
-		globalMap.getNearestNeighboursDirectIllumination(intersection, directHeap,MAX_SEARCH_DISTANCE_DIRECT);
+		globalMap.getNearestNeighboursDirectIllumination(intersection, currentTracable.getNormal(intersection), directHeap, this.MAX_SEARCH_DISTANCE_DIRECT);
+//		globalMap.getNearestNeighboursDirectIllumination(intersection, directHeap,MAX_SEARCH_DISTANCE_DIRECT);
 		int nI = directHeap.getNumIlluminationPhotons();
 //		int nS = directHeap.getNumShadowPhotons();
 //		System.out.println(nI + " | " + nS + " | " + directHeap.getSize() + " | " + directHeap.getMaxSize() + " | " + directHeap.testSize());
