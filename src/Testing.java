@@ -22,8 +22,32 @@ public class Testing {
 //		Testing t = new Testing();
 //		t.concurrentTesting();
 //		vectorTesting();
-		SphericalCoordinateSystemTesting();
+//		SphericalCoordinateSystemTesting();
 //		testingT();
+		testingUVXYS();
+	}
+	
+	public static void testingUVXYS() {
+//		Vector v = new Vector(1f/Math.sqrt(2),1f/Math.sqrt(2),0);
+		Vector v = new Vector(0,1,0);
+		v.normalise();
+		System.out.println(v);
+		UV(v.dx(),v.dy(),v.dz());
+		XYZ(1.0,0.25);
+	}
+	
+	public static void UV(double x, double y, double z) {
+		double v = (1f/(2*Math.PI)) * Math.atan(y/x);
+		double u = 1 - z*z;
+		System.out.println("(" + u + "," + v + ")");
+	}
+	
+	public static void XYZ(double u, double v) {
+		double z = Math.sqrt(1-u);
+		double y = Math.sin(2*Math.PI*v) * Math.sqrt(u);
+		double x = Math.cos(2*Math.PI*v) * Math.sqrt(u);
+		Point p = new Point(x,y,z);
+		System.out.println(p);
 	}
 	
 	public static void testingT() {
@@ -39,10 +63,19 @@ public class Testing {
 		Vector v = new Vector(0.5,0.4,0.3);
 		SphereicalCoordinateSystemWikipedia(v);
 		SphericalCoordinateSystemJensen(v);
+		
+		//Surface of a unit sphere
 		double theta = Math.acos(1-2*v.dx());
 		double phi = 2*Math.PI*v.dz();
 		System.out.println("Theta: " + theta + "\nPhi: " + phi);
 		System.out.println(getVec(theta,phi));
+		Reverse(theta,phi);
+	}
+	
+	public static void Reverse(double theta, double phi) {
+		double u = Math.pow(Math.sin(theta),2);
+		double v = phi/2*Math.PI;
+		System.out.println("Recalculated (u,v) = (" + u + "," + v + ").");
 	}
 	
 	public static void SphericalCoordinateSystemJensen(Vector direction) {
@@ -53,6 +86,7 @@ public class Testing {
 		double theta = 255*(Math.acos(direction.dx())) / Math.PI;
 		System.out.println("Phi: " + phi);
 		System.out.println("Theta: " + theta);
+		Reverse(theta,phi);
 		
 		Vector out = getVec(theta,phi);
 		System.out.println(out);
@@ -86,6 +120,7 @@ public class Testing {
 		
 		System.out.println("Phi: " + phi);
 		System.out.println("Theta: " + theta);
+		Reverse(theta,phi);
 		
 //		float r = 1;
 //		double y = r * Math.cos(phi) * Math.sin(theta);

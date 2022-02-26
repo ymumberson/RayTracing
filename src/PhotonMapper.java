@@ -34,12 +34,12 @@ public class PhotonMapper extends Application {
     private long totalTime;
     private boolean USING_KD_TREES = false;
     private static int numMisses,numDiffuse,numSpecular,numRefract,numAbsorbed,numAdded;
-    private int NUM_PHOTONS_SEARCHING_FOR = 100;
+    private int NUM_PHOTONS_SEARCHING_FOR = 500;
     private boolean USING_MINI_SCENE = true;
 //    private float LIGHT_AMOUNT = 300f;
     private float LIGHT_AMOUNT = 200f;
 //    private float LIGHT_AMOUNT = 100f;
-    private int NUM_LIGHT_RAYS = 10000;
+    private int NUM_LIGHT_RAYS = 100000;
     
     //Max squared differences
     private float MAX_SEARCH_DISTANCE_DIRECT = 1f * 1f;
@@ -297,7 +297,7 @@ public class PhotonMapper extends Application {
 //			pow = (LIGHT_AMOUNT/numPhotons) * LARGE_SCENE_LIGHT_SCALAR; //Because normal scene is 3x bigger
 //		}
 		
-		double pow = LIGHT_AMOUNT/(numPhotons*100);
+		double pow = LIGHT_AMOUNT/(numPhotons*1000);
 //		double pow = 1/numPhotons;
 		
 		//Fire rays at reflective sphere
@@ -569,8 +569,10 @@ public class PhotonMapper extends Application {
 			 */
 			if (currentTracable.isDiffuse()) {
 				currentColor = 
-						calculateDirectIllumination(intersection,currentTracable)
-						.add(calculateCaustics(intersection, currentTracable));
+						(calculateDirectIllumination(intersection,currentTracable)
+						.add(this.finalGather(r, intersection, currentTracable))).divide(2f);
+//						.add(calculateCaustics(intersection, currentTracable))
+//						.add(calculateRadianceFromGlobalPhotonMap(intersection, currentTracable));
 //						.add(calculateIndirectIlluminationAccurate(r,intersection,currentTracable));
 			} else {
 				currentColor = calculateSpecular(r,intersection,currentTracable,recursiveDepth);
@@ -714,7 +716,7 @@ public class PhotonMapper extends Application {
 	
 	public Vector calculateCaustics(Point intersection, Tracable currentTracable) {
 		Vector caustics = new Vector(0,0,0);
-		int numPhots = 60;
+		int numPhots = 100;
 		//Initialise heap
 		PhotonMaxHeap heap = new PhotonMaxHeap(numPhots);
 //		for (int i=0; i<numPhots; i++) {
@@ -738,11 +740,47 @@ public class PhotonMapper extends Application {
 //			Photon p2 = globalPhotons.get(i);
 //			heap.insert(p2, intersection.euclideanDistance(p2.getPosition()));
 //		}
-		globalMap.getNearestNeighbours(intersection,heap,MAX_SEARCH_DISTANCE_INDIRECT);
+//		globalMap.getNearestNeighbours(intersection,heap,MAX_SEARCH_DISTANCE_INDIRECT);
+		globalMap.getNearestNeighbours(intersection,currentTracable.getNormal(intersection),heap,MAX_SEARCH_DISTANCE_INDIRECT);
+		
 		float k = 1;
 		radiance = heap.getAverageColourConeFilter(k).multiply(new Vector(currentTracable.getColor()));
 		
 		return radiance;
+	}
+	
+	public Vector finalGather(Ray r, Point intersection, Tracable currentTracable) {
+		Vector finalGather = new Vector(0,0,0);
+		int numRays = 10;
+		Vector currentCol = new Vector(currentTracable.getColor());
+		for (int i=0; i<numRays; i++) {
+//			diffuse = diffuse.add(diffuseReflect(currentTracable,diffuse,intersection,diffusePerc/numRays,recursiveDepth-1));
+			Vector diffuseDir = this.calculateDiffuseDir(currentTracable, r, intersection);
+			Ray diffuseR = new Ray(intersection, diffuseDir);
+			
+			Tracable hitTracable = tracableObjects.get(0);
+			double t2 = -1;
+			for (Object o: tracableObjects) {
+				Tracable temp = (Tracable) o;
+				double tempT = temp.getIntersect(diffuseR);
+//				if (tempT > t && !Double.isNaN(tempT) && !Double.isInfinite(tempT)) {
+				if ((t2 < 0 && tempT > t2) || (t2 >= 0 && tempT < t2 && tempT >= 0)) {
+					//System.out.println("replacing t:" + t + " with tempT:" + tempT);
+					t2 = tempT;
+					hitTracable = temp;
+				}
+			}
+			if (t2 >= 0 && hitTracable.isDiffuse()) {
+				Point intersection2 = diffuseR.getPoint(t2);
+//				Vector radiance = this.calculateRadianceFromGlobalPhotonMap(intersection2, hitTracable);
+				Vector radiance = this.calculateDirectIllumination(intersection2, hitTracable);
+				finalGather = finalGather.add(radiance.multiply(currentCol).divide(numRays));
+//				diffuse = diffuse.add(
+//						(new Vector(currentTracable.getColor()).multiply(radiance)).divide(numRays));
+//				diffuse = diffuse.add(new Vector(hitTracable.getColor()).multiply(diffusePerc).divide(numRays));
+			}
+		}
+		return finalGather;
 	}
 	
 	public Vector calculateIndirectIlluminationAccurate(Ray r, Point intersection, Tracable currentTracable) {
