@@ -231,12 +231,12 @@ public class PhotonMap extends AABB {
 	public void getNearestNeighbours(Point p, Vector n, PhotonMaxHeap heap, double maxDistance2) {
 		if (this.isLeaf) {
 			for (Photon photon: photons) {
-				if (photon.getSurfaceNormal() != n) continue; //Skip photon if surface normals don't match
+//				if (photon.getSurfaceNormal() != n) continue; //Skip photon if surface normals don't match
 //				double dist = p.euclideanDistanceSquared(photon.getPosition());
 //				if (dist <= maxDistance2 && dist < heap.getMaxDistance()) {
 //					heap.insert(photon, dist);
 //				}
-				if (!(photon.isIlluminationPhoton() || photon.isShadowPhoton())) { //Doesn't include shadow or illumination photons
+				if (photon.getSurfaceNormal() == n && !(photon.isIlluminationPhoton() || photon.isShadowPhoton())) { //Doesn't include shadow or illumination photons
 					double dist = p.euclideanDistanceSquared(photon.getPosition());
 					if (dist <= maxDistance2 && dist < heap.getMaxDistance()) {
 						heap.insert(photon, dist);

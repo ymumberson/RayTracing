@@ -38,7 +38,7 @@ public class PhotonMapper extends Application {
     private boolean USING_MINI_SCENE = true;
 //    private float LIGHT_AMOUNT = 3000f;
 //    private float LIGHT_AMOUNT = 200f;
-//    private float LIGHT_AMOUNT = 100f;
+//    private float LIGHT_AMOUNT = 0.001f; //For 1,000,000 rays
 //    private float LIGHT_AMOUNT = 10f; //For 100,000 rays
     private float LIGHT_AMOUNT = 2000f; //For 10,000 rays
     private int NUM_LIGHT_RAYS = 10000;
@@ -280,7 +280,7 @@ public class PhotonMapper extends Application {
 			Ray lightRay = new Ray(light,dir);
 			Vector rayPower = new Vector(pow,pow,pow);
 //			System.out.println("light Ray:" + lightRay); //For testing
-			traceLightRay(lightRay,rayPower,globalPhotons,true);
+			traceLightRay(lightRay,rayPower,globalPhotons,true,false);
 		}
 		System.out.println("Num Added: " + numAdded);
 		System.out.println("Num Absorbed: " + numAbsorbed);
@@ -315,7 +315,7 @@ public class PhotonMapper extends Application {
 			dir = new Vector(target.subtract(light));
 			dir.normalise();
 			r = new Ray(light,dir);
-			traceLightRay(r,rayPower,causticsPhotons);
+			traceLightRay(r,rayPower,causticsPhotons,true,true);
 		}
 		
 		//Fire rays at refractive sphere
@@ -326,7 +326,7 @@ public class PhotonMapper extends Application {
 			dir = new Vector(target.subtract(light));
 			dir.normalise();
 			r = new Ray(light,dir);
-			traceLightRay(r,rayPower,causticsPhotons);
+			traceLightRay(r,rayPower,causticsPhotons,true,true);
 		}
 		
 		System.out.println("Num Added: " + numAdded);
@@ -341,15 +341,15 @@ public class PhotonMapper extends Application {
 		System.out.println(refractiveSphere);
 	}
 	
-	public void traceLightRay(Ray r, Vector rayPower, ArrayList<Photon> mapList) {
-		traceLightRay(r, rayPower, mapList, false);
+	public void traceLightRay(Ray r, Vector rayPower, ArrayList<Photon> mapList, boolean isCaustics) {
+		traceLightRay(r, rayPower, mapList, false, isCaustics);
 	}
 	
 	/*
 	 * Doesn't have a recursive depth, but should eventually terminate
 	 * according to russian roulette.
 	 */
-	public void traceLightRay(Ray r, Vector rayPower, ArrayList<Photon> mapList, boolean comesFromLightSource) {
+	public void traceLightRay(Ray r, Vector rayPower, ArrayList<Photon> mapList, boolean comesFromLightSource, boolean isCaustics) {
 		
 		//Find tracable intersected by light ray
 		Tracable hitTracable = tracableObjects.get(0);
@@ -384,25 +384,26 @@ public class PhotonMapper extends Application {
 			float padding = 0.001f;
 			switch (hitTracable.russianRoulette(r, intersection)) {
 				case 1: //Diffuse reflection
+					if (isCaustics) break; //Caustics can't be diffusely reflected
 					numDiffuse++;
 					Vector v = new Vector(hitTracable.getDiffuse());
 					Vector newPower = rayPower.multiply(v);
 					
 					dir = calculateDiffuseDir(hitTracable,r,intersection);
 					newR = new Ray(intersection,dir);
-					traceLightRay(newR,newPower,mapList);
+					traceLightRay(newR,newPower,mapList,isCaustics);
 					break;
 				case 2: //Specular reflection
 					numSpecular++;
 					dir = calculateReflectedDir(hitTracable,r,intersection);
 					newR = new Ray(intersection.add(new Point(dir).multiply(padding)),dir); //Think reflections were getting stuck (intersecting themselves)
-					traceLightRay(newR,rayPower,mapList); //Power doesn't change
+					traceLightRay(newR,rayPower,mapList,isCaustics); //Power doesn't change
 					break;
 				case 3: //Refraction
 					numRefract++;
 					dir = calculateRefractedDir(hitTracable,r,intersection);
 					newR = new Ray(intersection.add(new Point(dir).multiply(padding)),dir);
-					traceLightRay(newR,rayPower,mapList); //Power doesn't change
+					traceLightRay(newR,rayPower,mapList,isCaustics); //Power doesn't change
 					break;
 				default: //Absorption
 					numAbsorbed++;
@@ -577,8 +578,8 @@ public class PhotonMapper extends Application {
 				Vector direct=new Vector(0,0,0),caustics=new Vector(0,0,0),indirect=new Vector(0,0,0);
 				direct = calculateDirectIllumination(intersection,currentTracable);
 				caustics = calculateCaustics(intersection, currentTracable);
-//				indirect = this.calculateIndirectIlluminationWithImportanceSampling(intersection, currentTracable).multiply(0.2f);
 				indirect = this.calculateIndirectIlluminationWithImportanceSampling(intersection, currentTracable).multiply(2);
+//				indirect = this.calculateIndirectIlluminationWithImportanceSampling(intersection, currentTracable).multiply(6);
 //				indirect = calculateRadianceFromGlobalPhotonMap(intersection, currentTracable);
 //				indirect = calculateIndirectIlluminationAccurate(r,intersection,currentTracable).multiply(0.2f);
 //				indirect = directlyVisualiseGlobalPhotonMap(intersection,currentTracable);
@@ -975,7 +976,8 @@ public class PhotonMapper extends Application {
 		
 //		this.globalMap.getNearestNeighbours(intersection, heap, this.MAX_SEARCH_DISTANCE_INDIRECT); //Without surface normal
 		this.globalMap.getNearestNeighbours(intersection, currentTracable.getNormal(intersection), heap, this.MAX_SEARCH_DISTANCE_INDIRECT); //With surface normal
-		UnitSquare unitSquare = new UnitSquare(50);
+//		this.globalMap.getNearestNeighbours(intersection, currentTracable.getNormal(intersection), heap, 10*10); //With surface normal
+		UnitSquare unitSquare = new UnitSquare(30);
 		Photon[] photons = heap.getPhotons();
 		for (int i=0; i<heap.getSize(); i++) {
 			unitSquare.insertVector(photons[i].getIncidentDirection().multiply(-1));
@@ -990,11 +992,15 @@ public class PhotonMapper extends Application {
 			Vector diffuseDir = unitSquare.getDirection(randomValue);
 			float scalingFactor = (float) diffuseDir.magnitude();
 			diffuseDir.normalise();
+//			if (intersection.y() == 0 && intersection.x() > 7.3f) {
+//				System.out.println(intersection + " -> " + diffuseDir);
+//			}
 //			System.out.println(diffuseDir);
 //			Vector diffuseDir = this.calculateDiffuseDir(currentTracable, r, intersection);
-			Ray diffuseR = new Ray(intersection.add(new Point(diffuseDir)), diffuseDir);
+//			Ray diffuseR = new Ray(intersection.add(new Point(diffuseDir)), diffuseDir);
+			Ray diffuseR = new Ray(intersection, diffuseDir);
 //			System.out.println(diffuseDir);
-//			Ray diffuseR = new Ray(intersection.add(new Point(diffuseDir.multiply(0.0001))), diffuseDir);
+//			Ray diffuseR = new Ray(intersection.add(new Point(diffuseDir.multiply(0.01))), diffuseDir);
 			
 			Tracable hitTracable = tracableObjects.get(0);
 			double t2 = -1;
@@ -1009,7 +1015,7 @@ public class PhotonMapper extends Application {
 				}
 			}
 			if (t2 >= 0 && hitTracable.isDiffuse()) {
-				Point intersection2 = diffuseR.getPoint(t2);
+//				Point intersection2 = diffuseR.getPoint(t2);
 //				Vector radiance = this.calculateRadianceFromGlobalPhotonMap(intersection2, hitTracable);
 //				diffuse = diffuse.add(
 //						(new Vector(currentTracable.getColor()).multiply(radiance)).divide(numRays).multiply(scalingFactor));
@@ -1318,14 +1324,23 @@ public class PhotonMapper extends Application {
 	}
 	
 	public Vector calculateDiffuseDir(Tracable currentTracable, Ray r, Point intersection) {
-		Vector surfaceNorm = currentTracable.getNormal(intersection);
-		float radius = 100;
-//		float radius = y_axis;
-		Sphere s = new Sphere(intersection.add(new Point(surfaceNorm)),radius);
+//		Vector surfaceNorm = currentTracable.getNormal(intersection);
+//		float radius = 100;
+////		float radius = y_axis;
+//		Sphere s = new Sphere(intersection.add(new Point(surfaceNorm)),radius);
+//		
+//		Vector reflectDir = new Vector(s.generateRandomUnitPoint().add(s.c()).subtract(intersection));
+//		reflectDir.normalise();
+//		return reflectDir;
 		
-		Vector reflectDir = new Vector(s.generateRandomUnitPoint().add(s.c()).subtract(intersection));
-		reflectDir.normalise();
-		return reflectDir;
+		Vector N = currentTracable.getNormal(intersection);
+		Sphere s = new Sphere(new Point(0,0,0),1);
+		Vector d = s.generateRandomUnitVector();
+		if (d.dot(N) < 0) {
+			return d.multiply(-1);
+		} else {
+			return d;
+		}
 	}
 	
 	public void startTimer() {
