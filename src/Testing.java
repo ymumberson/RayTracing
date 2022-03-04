@@ -24,30 +24,97 @@ public class Testing {
 //		vectorTesting();
 //		SphericalCoordinateSystemTesting();
 //		testingT();
-		testingUVXYS();
+//		testingUVXYS();
+		ImportanceSamplingUsingThePhotonMap();
+//		MagnitudeTesting();
 	}
 	
+	public static void ImportanceSamplingUsingThePhotonMap() {
+		System.out.println("Start");
+		long start = System.currentTimeMillis();
+		UnitSquare square = new UnitSquare(4);
+		int numVecs = 500;
+		double max = 0;
+		double min = 0;
+		double maxU = 0;
+		double minU = 1;
+		Vector[] vecArr = new Vector[numVecs];
+		for (int i=0; i<numVecs; i++) {
+			double x = Math.random() * (2) + -1;
+			double y = Math.random() * (2) + -1;
+			double z = Math.random() * (2) + -1;
+			vecArr[i] = new Vector(x,y,z);
+			vecArr[i].normalise();
+//			Point p = UV(vecArr[i].dx(),vecArr[i].dy(),vecArr[i].dz());
+//			if (p.y() > max) {
+//				max = p.y();
+//			} else if (p.y() < min) {
+//				min = p.y();
+//			}
+//			if (p.x() > maxU) {
+//				maxU = p.x();
+//			} else if (p.x() < minU) {
+//				minU = p.x();
+//			}
+			square.insertVector(vecArr[i]);
+		}
+//		System.out.println("MaxV: " + max + ", minV: " + min);
+//		System.out.println("MaxU: " + maxU + ", minU: " + minU);
+//		square.sort();
+		square.createCumulativeFrequencies();
+		square.print();
+		System.out.println("\nGenerating directions");
+		for (int i=0; i<10; i++) {
+			double r = Math.random();
+			Vector dir = square.getDirection(r);
+			float mag = (float) dir.magnitude();
+			dir.normalise();
+			System.out.println(dir + " -> " + mag);
+		}
+		long finish = System.currentTimeMillis();
+		System.out.println("Finish");
+		System.out.println("Duration = " + (finish-start) + "ms.");
+	}
+	
+	/*
+	 * Currently takes 0ms, so less than 1 milisecond to run (I think 0.15ms)
+	 */
 	public static void testingUVXYS() {
 //		Vector v = new Vector(1f/Math.sqrt(2),1f/Math.sqrt(2),0);
-		Vector v = new Vector(0,1,0);
+//		Vector v = new Vector(0,1,0);
+		Vector v = new Vector(0.27059805007309856,0.6532814824381883,0.7071067811865476);
 		v.normalise();
 		System.out.println(v);
-		UV(v.dx(),v.dy(),v.dz());
-		XYZ(1.0,0.25);
+		long start = System.currentTimeMillis();
+		Point p = UV(v.dx(),v.dy(),v.dz());
+		p = new Point(p.x(),p.y()*4,p.z());
+		System.out.println("p: " + p.multiply(4));
+		XYZ(3f/4f,2f/4f);
+//		Point p2 = XYZ(p.x(),p.y());
+		long finish = System.currentTimeMillis();
+		System.out.println("Total took " + (finish-start) + "ms.");
 	}
 	
-	public static void UV(double x, double y, double z) {
+	public static Point UV(double x, double y, double z) {
+		long start = System.nanoTime();
 		double v = (1f/(2*Math.PI)) * Math.atan(y/x);
 		double u = 1 - z*z;
+		long finish = System.nanoTime();
+		System.out.println("UV took " + (finish-start) + "ns.");
 		System.out.println("(" + u + "," + v + ")");
+		return new Point(u,v,0);
 	}
 	
-	public static void XYZ(double u, double v) {
+	public static Point XYZ(double u, double v) {
+		long start = System.nanoTime();
 		double z = Math.sqrt(1-u);
 		double y = Math.sin(2*Math.PI*v) * Math.sqrt(u);
 		double x = Math.cos(2*Math.PI*v) * Math.sqrt(u);
 		Point p = new Point(x,y,z);
+		long finish = System.nanoTime();
+		System.out.println("XYZ took " + (finish-start) + "ns.");
 		System.out.println(p);
+		return p;
 	}
 	
 	public static void testingT() {
@@ -516,5 +583,13 @@ public class Testing {
 		}
 		
 		return true;
+	}
+	
+	public static void MagnitudeTesting() {
+		Vector v = new Vector(10,1,3);
+		v.normalise();
+		v = v.multiply(0.3);
+		double mag = v.magnitude();
+		System.out.println(mag);
 	}
 }
