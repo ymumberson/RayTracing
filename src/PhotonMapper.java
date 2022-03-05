@@ -27,7 +27,7 @@ public class PhotonMapper extends Application {
     private Point camera;
     private AABB bb; //Bounding box surrounding the scene used as background (well it will be anyway)
     private int MAX_RECURSIVE_DEPTH = 4;
-    private int SAMPLES_PER_PIXEL = 1;
+    private int SAMPLES_PER_PIXEL = 2;
     private KdTree tree;
     private long startTime;
     private long lastDuration = 0;
@@ -72,7 +72,7 @@ public class PhotonMapper extends Application {
 			imgX = 750; imgY = 800;
 		}
 		
-//		int miniFactor = 10; imgX = 750/miniFactor; imgY = 800/miniFactor; //Super mini scene
+		int miniFactor = 10; imgX = 750/miniFactor; imgY = 800/miniFactor; //Super mini scene
 		
 		WritableImage img = new WritableImage(imgX, imgY);
 		ImageView imgView = new ImageView(img);
@@ -180,7 +180,8 @@ public class PhotonMapper extends Application {
         		new Point(0,0,z_axis),
         		new Point(0,y_axis,z_axis),
         		new Point(0,y_axis,0));
-        wall1.setColor(Color.color(0.5, 0, 0));
+//        wall1.setColor(Color.color(0.5, 0, 0));
+        wall1.setColor(Color.DARKRED);
         wall1.setSpecular(Color.color(0, 0, 0));
         wall1.setDiffusePercent(diffusePercent);
         
@@ -199,7 +200,8 @@ public class PhotonMapper extends Application {
         		new Point(x_axis,0,0),
         		new Point(x_axis,y_axis,0),
         		new Point(x_axis,y_axis,z_axis));
-        wall3.setColor(Color.color(0, 0.5, 0));
+//        wall3.setColor(Color.color(0, 0.5, 0));
+        wall3.setColor(Color.DARKGREEN);
         wall3.setSpecular(Color.color(0, 0, 0));
         wall3.setDiffusePercent(diffusePercent);
         
@@ -301,7 +303,7 @@ public class PhotonMapper extends Application {
 //			pow = (LIGHT_AMOUNT/numPhotons) * LARGE_SCENE_LIGHT_SCALAR; //Because normal scene is 3x bigger
 //		}
 		
-		double pow = LIGHT_AMOUNT/(numPhotons*1000);
+		double pow = LIGHT_AMOUNT/(numPhotons*1000*10);
 //		double pow = 1/numPhotons;
 		
 		//Fire rays at reflective sphere
@@ -484,23 +486,21 @@ public class PhotonMapper extends Application {
 //        		//Super Sampling (Not adaptive so quite slow) -> Value for n => n*n samples
         		int n = SAMPLES_PER_PIXEL;
         		if (n > 1) { //ie if super sampling
-        			double i1 = ((double)i/w)*x_axis;
-        			double j1 = ((double)j/h)*y_axis;
-//            		float step = 1f/n;
-        			float xWidth = (float)w/x_axis;
-        			float yWidth = (float)h/y_axis;
+        			double xMiddle = ((double)i/w)*x_axis;
+        			double yMiddle = ((double)j/h)*y_axis;
+        			float xWidth = (float) (x_axis/w);
+        			float yWidth = (float) (y_axis/h);
         			float xStep = xWidth/n;
         			float yStep = yWidth/n;
+//            		float step = 1f/n;
             		float redAcc = 0;
             		float greenAcc = 0;
             		float blueAcc = 0;
-//            		float upperBound = n/2f;
-            		float xUpper = n/(2*xWidth);
-            		float yUpper = n/(2*yWidth);
-            		for (float x=-xUpper; x<xUpper; x++) {
-            			double i2 = i1+x*xStep;
-            			for (float y=-yUpper; y<yUpper; y++) {
-            				double j2 = j1+y*yStep;
+            		float upperBound = n/2f;
+            		for (float x=-upperBound; x<upperBound; x++) {
+            			double i2 = xMiddle+x*xStep;
+            			for (float y=-upperBound; y<upperBound; y++) {
+            				double j2 = yMiddle+y*yStep;
             				
 //            				Vector rayVec2 = new Vector(i2+0.5-camera.x(), j2+0.5-camera.y(), -camera.z());
             				Vector rayVec2 = new Vector(i2-camera.x(), j2-camera.y(), -camera.z());
@@ -579,6 +579,7 @@ public class PhotonMapper extends Application {
 				direct = calculateDirectIllumination(intersection,currentTracable);
 				caustics = calculateCaustics(intersection, currentTracable);
 				indirect = this.calculateIndirectIlluminationWithImportanceSampling(intersection, currentTracable).multiply(2);
+				
 //				indirect = this.calculateIndirectIlluminationWithImportanceSampling(intersection, currentTracable).multiply(6);
 //				indirect = calculateRadianceFromGlobalPhotonMap(intersection, currentTracable);
 //				indirect = calculateIndirectIlluminationAccurate(r,intersection,currentTracable).multiply(0.2f);
