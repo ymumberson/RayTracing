@@ -26,13 +26,26 @@ public class UnitSquare {
 //		grid[(int)uv.dx()][(int)uv.dy()]++;
 		int index = (n*(int)uv.dy() + (int)uv.dx());
 		if (index >= n*n) index = n*n-1;
-//		System.out.println("index: " + index + ", uv -> " + uv);
-//		System.out.println(uv + " -> " + index);
+		
+		// Add energy to cell
 		array[index] = array[index].add(new Vector(0,0,1));
-//		System.out.println("Inserted into: (" + ((int)uv.dx()) + ", " + ((int)uv.dy()) + "), count at: " + grid[(int)uv.dx()][(int)uv.dy()]);
-//		System.out.println("Inserted into: (" + ((int)uv.dx()) + ", " + ((int)uv.dy()) + "), count at: " + array[index]);
-		totalEnergy++; //Increase total energy as we've inserted
+		
+		totalEnergy++; //Increase total energy by 1 as we've inserted
 	}
+	
+//	public void insertVector(Photon p) {
+//		Vector v = p.getIncidentDirection().multiply(-1);
+////		Vector uv = UV(v); System.out.println(uv); uv = uv.multiply(n); System.out.println(uv);
+//		Vector uv = UV(v).multiply(n);
+////		grid[(int)uv.dx()][(int)uv.dy()]++;
+//		int index = (n*(int)uv.dy() + (int)uv.dx());
+//		if (index >= n*n) index = n*n-1;
+//		
+//		// Add energy to cell
+//		array[index] = array[index].add(new Vector(0,0,1));
+//		
+//		totalEnergy += p.getEnergy().magnitude(); //Increase total energy by 1 as we've inserted
+//	}
 	
 //	public Vector UV(Vector v) {
 //		return UV(v.dx(),v.dy(),v.dz());
@@ -113,7 +126,9 @@ public class UnitSquare {
 				Vector xyz = XYZ(uv.dx()/n,uv.dy()/n);
 //				Vector xyz = XYZ(uv.dx(),uv.dy());
 				xyz.normalise();
-				return xyz.multiply(scalingFactor);
+				return xyz;
+//				return xyz.multiply(scalingFactor);
+				
 //				return XYZ(array[i].dx()/n,array[i].dy()/n);
 			}
 		}
@@ -239,98 +254,36 @@ public class UnitSquare {
 	
 	public static void main(String[] args) {
 		UnitSquare s = new UnitSquare(30);
-////		Vector v = new Vector(-0.5,-0.3,0);
-////		Vector v = new Vector(0.2,-0.3,0);
-//		Vector v = new Vector(20,-300,-2);
-//		v.normalise();
-//		System.out.println(v);
-//		Vector uv = s.UV2(v);
-//		System.out.println(uv);
-//		Vector reverse = s.XYZ2(uv.dx(),uv.dy());
-//		System.out.println(reverse);
-//		
-//		System.out.println();
-////		Vector v2 = new Vector(0.5,0.3,0);
-//		Vector v2 = v.multiply(-1);
-//		v2.normalise();
-//		System.out.println(v2);
-//		Vector uv2 = s.UV2(v2);
-//		System.out.println(uv2);
-//		Vector reverse2 = s.XYZ2(uv2.dx(),uv2.dy());
-//		System.out.println(reverse2);
+		Point pos = new Point(0,0,0);
+		Vector norm = new Vector(0,1,0);
+		Vector v1 = new Vector(1,0,0);
+		Vector v2 = new Vector(0,1,0);
+		Vector v3 = new Vector(0,0,1);
+		Photon p1 = new Photon(pos,v1,norm,new Vector(10,0,0));
+		Photon p2 = new Photon(pos,v2,norm,new Vector(0,0,0.1));
+		Photon p3 = new Photon(pos,v3,norm,new Vector(0,0,5));
 		
-//		Vector v;
-//		double maxU = 0;
-//		double minU = 1;
-//		double maxV = 0;
-//		double minV = 1;
-//		for (int i=0; i<10000; i++) {
-//			double x = Math.random() * (2) + -1;
-//			double y = Math.random() * (2) + -1;
-//			double z = Math.random() * (2) + -1;
-//			v = new Vector(x,y,z);
-//			v.normalise();
-////			System.out.println(v);
-//			Vector uv = s.UV(v);
-////			System.out.println(s.XYZ(uv.dx(),uv.dy()));
-////			System.out.println();
-//			if (uv.dx() < minU) {
-//				minU = uv.dx();
-//			} else if (uv.dx() > maxU) {
-//				maxU = uv.dx();
-//			}
-//			if (uv.dy() < minV) {
-//				minV = uv.dy();
-//			} else if (uv.dy() > maxV) {
-//				maxV = uv.dy();
-//			}
-//		}
-//		System.out.println("MaxV: " + maxV + ", minV: " + minV);
-//		System.out.println("MaxU: " + maxU + ", minU: " + minU);
+		v1.normalise();
+		v2.normalise();
+		v3.normalise();
+		System.out.println("v1: " + v1);
+		System.out.println("v2: " + v2);
+		System.out.println("v3: " + v3);
 		
-		//Testing sampling
-		System.out.println("Vectors");
-		Vector[] v1 = new Vector[10];
 		for (int i=0; i<10; i++) {
-			v1[i] = new Vector(0.5,0,1);
-			v1[i].normalise();
-			s.insertVector(v1[i]);
+			s.insertVector(p1.getIncidentDirection());
 		}
-		System.out.println(v1[0] + " @ 10");
-		
-		Vector[] v2 = new Vector[20];
-		for (int i=0; i<20; i++) {
-			v2[i] = new Vector(1,-1,0);
-			v2[i].normalise();
-			s.insertVector(v2[i]);
+		for (int i=0; i<30; i++) {
+			s.insertVector(p2.getIncidentDirection());
 		}
-		System.out.println(v2[2] + " @ 20");
-		
-		Vector[] v3 = new Vector[2];
-		for (int i=0; i<2; i++) {
-			v3[i] = new Vector(0,10,1);
-			v3[i].normalise();
-			s.insertVector(v3[i]);
+		for (int i=0; i<10; i++) {
+			s.insertVector(p3.getIncidentDirection());
 		}
-		System.out.println(v3[0] + " @ 2");
-		
-		Vector[] v4 = new Vector[2];
-		for (int i=0; i<2; i++) {
-			v4[i] = new Vector(-90,0,10);
-			v4[i].normalise();
-			s.insertVector(v4[i]);
-		}
-		System.out.println(v4[0] + " @ 2");
-		
-		Vector[] v5 = new Vector[2];
-		for (int i=0; i<2; i++) {
-			v5[i] = new Vector(-4,-3,-2);
-			v5[i].normalise();
-			s.insertVector(v5[i]);
-		}
-		System.out.println(v5[0] + " @ 2");
 		
 		s.createCumulativeFrequencies();
-		s.print();
+		
+		for (int i=0; i<10; i++) {
+			System.out.println(s.getDirection(Math.random()));
+		}
 	}
 }

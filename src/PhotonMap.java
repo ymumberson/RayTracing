@@ -198,6 +198,32 @@ public class PhotonMap extends AABB {
 	 * @param heap
 	 * @param maxDistance2 maximum distance squared
 	 */
+	public void getNearestNeighboursAll(Point p, Vector n, PhotonMaxHeap heap, double maxDistance2) {
+		if (this.isLeaf) {
+			for (Photon photon: photons) {
+				if (photon.getSurfaceNormal() == n) {
+					double dist = p.euclideanDistanceSquared(photon.getPosition());
+					if (dist <= maxDistance2 && dist < heap.getMaxDistance()) {
+						heap.insert(photon, dist);
+					}
+				}
+			}
+		} else {
+			if (left.euclideanDistanceSquared(p) < heap.getMaxDistance()) {
+				left.getNearestNeighboursAll(p,n,heap,maxDistance2);
+			}
+			if (right != null && right.euclideanDistanceSquared(p) < heap.getMaxDistance()) {
+				right.getNearestNeighboursAll(p,n,heap,maxDistance2);
+			}
+		}
+	}
+	
+	/**
+	 * Assumes heap has been initialised with n photons
+	 * @param p
+	 * @param heap
+	 * @param maxDistance2 maximum distance squared
+	 */
 	public void getNearestNeighbours(Point p, PhotonMaxHeap heap, double maxDistance2) {
 		if (this.isLeaf) {
 			for (Photon photon: photons) {

@@ -71,17 +71,18 @@ public class Sphere extends Tracable {
 	}
 	
 	public Point generateRandomUnitPoint() {
-		double x = 0;
-		double y = 0;
-		double z = 0;
-		int min = -1;
-		int max = 1;
-		do {
-			x = (Math.random() * (max-min)) + min;
-			y = (Math.random() * (max-min)) + min;
-			z = (Math.random() * (max-min)) + min;
-		} while (x*x + y*y + z*z > 1);
-		return new Point(x,y,z);
+//		double x = 0;
+//		double y = 0;
+//		double z = 0;
+//		int min = -1;
+//		int max = 1;
+//		do {
+//			x = (Math.random() * (max-min)) + min;
+//			y = (Math.random() * (max-min)) + min;
+//			z = (Math.random() * (max-min)) + min;
+//		} while (x*x + y*y + z*z > 1);
+//		return new Point(x,y,z);
+		return new Point(generateRandomUnitVector());
 	}
 	
 	public Vector generateRandomUnitVector() {
@@ -95,7 +96,9 @@ public class Sphere extends Tracable {
 			y = (Math.random() * (max-min)) + min;
 			z = (Math.random() * (max-min)) + min;
 		} while (x*x + y*y + z*z > 1);
-		return new Vector(x,y,z);
+		Vector v = new Vector(x,y,z);
+		v.normalise();
+		return v;
 	}
 	
 	public static void main(String[] args) {

@@ -18,12 +18,13 @@ import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
+import javafx.scene.control.TextField;
 
 import java.io.File;
 import java.io.FileNotFoundException;
 
 public class Main extends Application {
-//	private int x_axis = 640; private int y_axis = 480; private int z_axis = 400;
+//	private int x_axis = 640; private int y_axis = 480; private int z_axis = 400; //For Bunny
 //	private int x_axis = 1920; private int y_axis = 1080; private int z_axis = 2000;
 	private int x_axis = 750; private int y_axis = 800; private int z_axis = 750; //For actual scene
 	
@@ -39,7 +40,14 @@ public class Main extends Application {
     private long lastDuration = 0;
     private long totalTime;
     private boolean USING_KD_TREES = false;
+    private boolean sceneContainsAreaLight = false;
 	
+//    Vector lookfrom = new Vector(0,0,0);
+//    Vector lookat = new Vector (0,0,0);
+//    Vector vup = new Vector(0,-1,0);
+//    float vfov = 90f;
+//    float aspect = x_axis/y_axis;
+    
 	public static void main(String[] args) {
 		launch(args);
 	}
@@ -80,6 +88,35 @@ public class Main extends Application {
         		tree = tree.getLeft();
         	}
         });
+        
+        /* Camera stuff */
+//        VBox vb1 = new VBox();
+//        FlowPane fp1 = new FlowPane();
+//        TextField txt1 = new TextField();
+//        TextField txt2 = new TextField();
+//        TextField txt3 = new TextField();
+//        Button btn1 = new Button("lookfrom");
+//        fp1.getChildren().addAll(txt1,txt2,txt3,btn1);
+//        vb1.getChildren().addAll(fp1);
+//        root.getChildren().addAll(vb1);
+//        btn1.setOnMouseClicked(e -> {
+//        	lookfrom = new Vector(Float.valueOf(txt1.getText()),Float.valueOf(txt2.getText()),Float.valueOf(txt3.getText()));
+//        	System.out.println("Lookfrom: " + lookfrom);
+//        	this.renderMoveCamera(img, lookfrom, lookat, vup, vfov, aspect);
+//        });
+//        FlowPane fp2 = new FlowPane();
+//        TextField txt4 = new TextField();
+//        TextField txt5 = new TextField();
+//        TextField txt6 = new TextField();
+//        Button btn2 = new Button("lookat");
+//        fp2.getChildren().addAll(txt4,txt5,txt6,btn2);
+//        vb1.getChildren().addAll(fp2);
+//        btn2.setOnMouseClicked(e -> {
+//        	lookat = new Vector(Float.valueOf(txt4.getText()),Float.valueOf(txt5.getText()),Float.valueOf(txt6.getText()));
+//        	System.out.println("Lookat: " + lookat);
+//        	this.renderMoveCamera(img, lookfrom, lookat, vup, vfov, aspect);
+//        });
+        
         
 //        traceSampleScene(img,10);
 //        traceBunny(img, 10);
@@ -220,11 +257,11 @@ public class Main extends Application {
 	
 	public void initialiseBunnyTracables() {
 		//File f = new File("BunnyTest.ply");
-//		File f = new File("dragon_vrip.ply"); // @ 871414 triangles
+		File f = new File("dragon_vrip.ply"); // @ 871414 triangles
 //		File f = new File("bun_zipper.ply"); //Very high res @ 69451 triangles
 //		File f = new File("bun_zipper_res2.ply"); //High res @ 16301 triangles
 //		File f = new File("bun_zipper_res3.ply"); //Medium res @ 3851 triangles
-		File f = new File("bun_zipper_res4.ply"); //Low res @ 948 triangles
+//		File f = new File("bun_zipper_res4.ply"); //Low res @ 948 triangles
 		Scanner in;
 		try {
 			in = new Scanner(f);
@@ -238,8 +275,8 @@ public class Main extends Application {
 			System.out.println("number of Vertices: " + numVertex);
 			
 			//Skip 6 lines
-			int numLinesSkip2 = 5; //For bunny
-//			int numLinesSkip2 = 3; //For dragon
+//			int numLinesSkip2 = 5; //For bunny
+			int numLinesSkip2 = 3; //For dragon
 			for (int i=0; i<numLinesSkip2; i++) {
 				in.nextLine();
 			}
@@ -262,7 +299,7 @@ public class Main extends Application {
 //					Float.parseFloat(str[1])*scalar,
 //					Float.parseFloat(str[2])*scalar + z_axis/2);
 				
-				colourList[i] = Double.valueOf(str[3]); //Only for bunny
+//				colourList[i] = Double.valueOf(str[3]); //Only for bunny
 				
 				Point p = new Point(
 						Float.parseFloat(str[2])*scalar,
@@ -609,7 +646,8 @@ public class Main extends Application {
         		new Point(0,0,0),
         		new Point(0,y_axis,0),
         		new Point(x_axis,y_axis,0));
-        wall4.setColor(Color.color(0, 0, 0.5));
+//        wall4.setColor(Color.color(0, 0, 0.5));
+        wall4.setColor(Color.color(0.7,0.7,0.7));
         wall4.setSpecular(Color.color(0, 0, 0));
         wall4.setDiffusePercent(0.5f);
         
@@ -622,11 +660,22 @@ public class Main extends Application {
         ceiling.setSpecular(Color.color(0, 0, 0));
         ceiling.setDiffusePercent(0.5f);
         
+//        float width = 200f;
+//        Point middle = new Point(x_axis/2f,1,z_axis/2f);
+//        AreaLight lightSource = new AreaLight(
+//        		middle.add(new Point(-width/2,0,-width/2)),
+//        		middle.add(new Point(width/2,0,-width/2)),
+//        		middle.add(new Point(width/2,0,width/2)),
+//        		middle.add(new Point(-width/2,0,width/2)));
+//        lightSource.setColor(Color.WHITE);
+//        tracableObjects.add(lightSource);
+//        sceneContainsAreaLight = true;
+        
         tracableObjects.add(floor);
         tracableObjects.add(wall1);
         tracableObjects.add(wall2);
         tracableObjects.add(wall3);
-        tracableObjects.add(wall4);
+//        tracableObjects.add(wall4);
         tracableObjects.add(ceiling);
 	}
 	
@@ -637,13 +686,34 @@ public class Main extends Application {
 		System.out.println(tree.getNumTracables());
 	}
 	
+	public void renderMoveCamera(WritableImage img, Vector lookfrom, Vector lookat, Vector vup, float vfov, float aspect) {
+		int w=(int) img.getWidth(), h=(int) img.getHeight();
+        PixelWriter image_writer = img.getPixelWriter();
+        light = new Point(x_axis/2f,y_axis/3,-10);
+        
+//        PositionableCamera cam = new PositionableCamera(new Vector(x_axis/2,y_axis/2,100), 
+//        		new Vector(x_axis/2,y_axis*2,-10),
+//        		new Vector(0,-1,0),90,(float)w/(float)h);
+        PositionableCamera cam = new PositionableCamera(lookfrom, lookat, vup, vfov, aspect);
+        
+        for (int j=0; j<h; j++) {
+        	for (int i=0; i<w; i++) {
+            		float u = (float)i/(float)w;
+            		float v = (float)j/(float)h;
+            		Ray r = cam.getRay(u, v);
+            		
+            		image_writer.setColor(i, j, trace(r,MAX_RECURSIVE_DEPTH));
+        	}
+        }
+	}
+	
 	public void render(WritableImage img, int lightX) {
 		int w=(int) img.getWidth(), h=(int) img.getHeight();
         PixelWriter image_writer = img.getPixelWriter();
         
 //        light = new Point(lightX,0,0);
-//        light = new Point(lightX,y_axis/3,-10);
-        light = new Point(lightX,y_axis/3,z_axis/2);
+        light = new Point(lightX,y_axis/3,-10);
+//        light = new Point(lightX,y_axis/3,z_axis/2);
         camera = new Point(w/2.0f,h/2.0f,-1000f);
         
         //For test camera model//
@@ -713,13 +783,7 @@ public class Main extends Application {
             		rayVec.normalise();
             		Ray r = new Ray(new Point(i,j,-1), rayVec); //Persepective projection
             		//Ray r = new Ray(new Point(i,j,0), new Vector(0,0,1)); //Authnographic projection
-            		
-            		//Debugging 'dead pixels' from triangles
-//            		Color col = trace(r,MAX_RECURSIVE_DEPTH);
-//            		if (col == Color.BLACK) {
-//            			System.out.println(i + " " + j);
-//            		}
-//            		image_writer.setColor(i, j, col);
+            		//System.out.println("\nShould be: " + r);
             		
             		image_writer.setColor(i, j, trace(r,MAX_RECURSIVE_DEPTH));
 //            		image_writer.setColor(i, j, traceTree(r,MAX_RECURSIVE_DEPTH));
@@ -845,34 +909,6 @@ public class Main extends Application {
 			}
 			
 			
-			//Without kd-tree
-//			for (Object o: tracableObjects) {
-//    			if (o != currentTracable) {
-//    				Tracable temp = (Tracable) o;
-//    				if (temp.getIntersect(toLightR) >= 0) {
-//    					//System.out.println("In shadow!" + o);
-//    					inShadow = true;
-//    				}
-//    			}
-//    		}
-			
-			//With kd-tree
-////			Tracable inShadowFrom = tree.getTracable(toLightR);
-//			Tracable inShadowFrom = tree.getTracableIgnoreSelf(toLightR, currentTracable);
-////			if (inShadowFrom != null && inShadowFrom != currentTracable) {
-//			if (inShadowFrom != null) {
-////				System.out.println(currentTracable + "\n    !=" + inShadowFrom);
-////				double tShadow = inShadowFrom.getIntersect(toLightR);
-//				//if tLight is after the light
-////				if (tShadow < lightSphereIntersect) {
-//////					System.out.println(tShadow + " < " + lightSphereIntersect);
-//////					System.out.println("====================================");
-////					inShadow = true;
-////				}
-//				inShadow = true;
-//			}
-			
-			
 			if (!inShadow) {
 				//System.out.println("Not in shadow!");
 				lnorm = new Vector(light.subtract(intersection));
@@ -959,7 +995,7 @@ public class Main extends Application {
 				
 			//Messing with colour bleeding via diffuse reflections	
 			} else { 
-//				int numRays = 10;
+//				int numRays = 100;
 //				float diffusePerc = 0.35f;
 //				currentColor = currentColor.multiply(1-diffusePerc);
 //				for (int i=0; i<numRays; i++) {
@@ -967,6 +1003,7 @@ public class Main extends Application {
 //				}
 			}
 			
+			currentColor = currentColor.add(currentTracable.getEmissiveValue());
 			
 			//Colour normalisation between 0 and 1
 			red = currentColor.dx();
@@ -1101,7 +1138,8 @@ public class Main extends Application {
 		float radius = 100;
 		Sphere s = new Sphere(intersection.add(new Point(surfaceNorm)),radius);
 		
-		Vector reflectDir = new Vector(s.generateRandomUnitPoint().add(s.c()).subtract(intersection));
+//		Vector reflectDir = new Vector(s.generateRandomUnitPoint().add(s.c()).subtract(intersection));
+		Vector reflectDir = this.calculateDiffuseDir(currentTracable, intersection);
 		reflectDir.normalise();
 		Ray rayDiff = new Ray(intersection.add(new Point(reflectDir)), reflectDir);
 //		Color col = trace(rayDiff, recursiveDepth-1);
@@ -1125,6 +1163,26 @@ public class Main extends Application {
 		}
 		
 //		return new Vector(col).multiply(rayScalar);
+	}
+	
+	public Vector calculateDiffuseDir(Tracable currentTracable, Point intersection) {
+//		Vector surfaceNorm = currentTracable.getNormal(intersection);
+//		float radius = 100;
+////		float radius = y_axis;
+//		Sphere s = new Sphere(intersection.add(new Point(surfaceNorm)),radius);
+//		
+//		Vector reflectDir = new Vector(s.generateRandomUnitPoint().add(s.c()).subtract(intersection));
+//		reflectDir.normalise();
+//		return reflectDir;
+		
+		Vector N = currentTracable.getNormal(intersection);
+		Sphere s = new Sphere(new Point(0,0,0),1);
+		Vector d = s.generateRandomUnitVector();
+		if (d.dot(N) < 0) {
+			return d.multiply(-1);
+		} else {
+			return d;
+		}
 	}
 	
 	public Color traceTest(Ray r) {

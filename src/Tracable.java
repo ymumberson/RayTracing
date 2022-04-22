@@ -10,6 +10,12 @@ public abstract class Tracable {
 	protected double refractiveIndex = 1;
 	protected double diffusePercent;
 	
+	protected boolean isLightSource = false;
+	
+	public boolean isLight() {
+		return this.isLightSource;
+	}
+	
 	/**
 	 * Finds the point at which the ray intersects the object
 	 * @param r
@@ -206,6 +212,10 @@ public abstract class Tracable {
 		}
 		
 		return 0; //Absorption
+	}
+	
+	public Vector getEmissiveValue() {
+		return new Vector(0,0,0);
 	}
 	
 	public static void main(String[] args) {

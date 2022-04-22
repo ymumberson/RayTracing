@@ -95,6 +95,10 @@ public class Vector {
 		return new Vector(Math.abs(dx),Math.abs(dy),Math.abs(dz));
 	}
 	
+	public Vector pow(float p) {
+		return new Vector(Math.pow(this.dx, p),Math.pow(this.dy, p),Math.pow(this.dz, p));
+	}
+	
 	public String toString() {
 		return "(" + this.dx + "," + this.dy + "," + this.dz + ")";
 	}

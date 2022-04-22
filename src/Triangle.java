@@ -28,6 +28,47 @@ public class Triangle extends Tracable {
 		return p2;
 	}
 	
+	
+	/*
+	 * Naive geometric solution
+	 */
+//	public double getIntersect(Ray r) {
+//		Vector v0v1 = new Vector(this.p1.subtract(this.p0));
+//		Vector v0v2 = new Vector(this.p2.subtract(this.p0));
+//		Vector N = v0v1.cross(v0v2);
+//		
+//		float NdotRayDirection = (float)N.dot(r.d());
+//		if (Math.abs(NdotRayDirection) < EPSILON) {
+//			return -1;
+//		}
+//		
+//		float d = (float) -N.dot(new Vector(this.p0));
+//		
+//		double t = -(N.dot(new Vector(r.o())) + d) / NdotRayDirection;
+//		
+//		if (t < 0) return -1;
+//		
+//		Vector P = new Vector(r.o()).add(r.d().multiply(t));
+//		Vector C;
+//		
+//		Vector edge0 = new Vector(this.p1.subtract(this.p0));
+//		Vector vp0 = P.minus(new Vector(this.p0));
+//		C = edge0.cross(vp0);
+//		if (N.dot(C) < 0) return -1;
+//		
+//		Vector edge1 = new Vector(this.p2.subtract(this.p1));
+//		Vector vp1 = P.minus(new Vector(this.p1));
+//		C = edge1.cross(vp1);
+//		if (N.dot(C) < 0) return -1;
+//		
+//		Vector edge2 = new Vector(this.p0.subtract(this.p2));
+//		Vector vp2 = P.minus(new Vector(this.p2));
+//		C = edge2.cross(vp2);
+//		if (N.dot(C) < 0) return -1;
+//		
+//		return t;
+//	}
+	
 //	@Override
 	public double getIntersect(Ray r) {
 //		return this.generateAABB().getIntersect(r); //For drawing boxes instead of triangles

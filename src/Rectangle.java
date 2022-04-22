@@ -1,6 +1,6 @@
 public class Rectangle extends Tracable{
-	private final boolean VALID_RECT;
-	private Triangle t1,t2;
+	protected final boolean VALID_RECT;
+	protected Triangle t1,t2;
 	
 	public Rectangle(Triangle t1, Triangle t2) {
 		this.t1 = t1;
