@@ -810,7 +810,7 @@ public class PhotonMapper extends Application {
 	}
 	
 	public Vector calculateDirectIlluminationWithAreaLight(Point intersection, Tracable currentTracable) {
-		return new Vector(currentTracable.getColor()).multiply(calculateRadianceWithAreaLight(intersection, currentTracable)).multiply(0.6f);
+		return new Vector(currentTracable.getColor()).multiply(calculateRadianceWithAreaLight(intersection, currentTracable));
 	}
 	
 	public float calculateRadianceWithAreaLight(Point intersection, Tracable currentTracable) {
