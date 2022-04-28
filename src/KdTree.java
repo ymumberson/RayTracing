@@ -239,4 +239,31 @@ public class KdTree extends AABB{
 			return left.getNumTracables() + right.getNumTracables();
 		}
 	}
+//	
+//	public boolean showTree(Ray r) {
+//		double t = this.getIntersect(r);
+//		if (t >= 0) {
+//			return showTree(r.getPoint(t));
+//		}
+//		return false;
+//	}
+//	
+//	private boolean showTree(Point dir) {
+//		if (dir.x() == this.min.x() || dir.x() == this.max.x() ||
+//				dir.y() == this.min.y() || dir.y() == this.max.y() ||
+//				dir.z() == this.min.z() || dir.z() == this.max.z()) {
+//			return true;
+//		} else {
+//			boolean temp = false;
+//			if (this.left != null) {
+//				if (left.showTree(dir)) {
+//					return true;
+//				}
+//			}
+//			if (this.right != null) {
+//				return right.showTree(dir);
+//			}
+//		}
+//		return false;
+//	}
 }

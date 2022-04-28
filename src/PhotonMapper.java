@@ -36,11 +36,13 @@ public class PhotonMapper extends Application {
     private boolean USING_KD_TREES = false;
     private static int numMisses,numDiffuse,numSpecular,numRefract,numAbsorbed,numAdded;
     private int NUM_PHOTONS_SEARCHING_FOR = 500;
+    private boolean USING_IMPORTANCE_SAMPLING = false;
     private boolean USING_MINI_SCENE = true;
+    private boolean USING_SHADOW_PHOTONS = false;
     private boolean USING_AREA_LIGHT = true;
     private float AREA_LIGHT_NUM_SAMPLES = 16;
     private AreaLight areaLight;
-    private boolean USING_GAMMA_CORRECTION = true;
+    private boolean USING_GAMMA_CORRECTION = false;
     private float gamma = 2.2f;
 //    private float LIGHT_AMOUNT = 3000f;
 //    private float LIGHT_AMOUNT = 200f;
@@ -319,13 +321,6 @@ public class PhotonMapper extends Application {
 	}
 	
 	public void buildCausticsPhotonMap(int numPhotons) {
-//		double pow = 1; //default
-//		if (USING_MINI_SCENE) {
-//			pow = LIGHT_AMOUNT/numPhotons;
-//		} else {
-//			pow = (LIGHT_AMOUNT/numPhotons) * LARGE_SCENE_LIGHT_SCALAR; //Because normal scene is 3x bigger
-//		}
-		
 		double pow = LIGHT_AMOUNT/(numPhotons*1000*10);
 //		double pow = 1/numPhotons;
 		
@@ -334,23 +329,40 @@ public class PhotonMapper extends Application {
 		Vector dir;
 		Ray r;
 		Vector rayPower = new Vector(pow,pow,pow);
+		Point origin;
+		double u,v;
 		for (int i=0; i<numPhotons/2; i++) {
+			
+			if (this.USING_AREA_LIGHT) {
+				u = Math.random();
+				v = Math.random();
+				origin = this.areaLight.getPointOnLight((float)u, (float)v);
+			} else {
+				origin = light;
+			}
 			target = reflectiveSphere.c().add(reflectiveSphere.generateRandomUnitPoint()
 					.multiply(reflectiveSphere.getRadius()));
-			dir = new Vector(target.subtract(light));
+			dir = new Vector(target.subtract(origin));
 			dir.normalise();
-			r = new Ray(light,dir);
+			r = new Ray(origin,dir);
 			traceLightRay(r,rayPower,causticsPhotons,true,true);
 		}
 		
 		//Fire rays at refractive sphere
 		for (int i=0; i<numPhotons/2; i++) {
-			target = refractiveSphere.c().add(refractiveSphere.generateRandomUnitPoint()
+			
+			if (this.USING_AREA_LIGHT) {
+				u = Math.random();
+				v = Math.random();
+				origin = this.areaLight.getPointOnLight((float)u, (float)v);
+			} else {
+				origin = light;
+			}
+			target = refractiveSphere.c().add(refractiveSphere.generateRandomPointInSphere()
 					.multiply(refractiveSphere.getRadius()));
-//			System.out.println(target);
-			dir = new Vector(target.subtract(light));
+			dir = new Vector(target.subtract(origin));
 			dir.normalise();
-			r = new Ray(light,dir);
+			r = new Ray(origin,dir);
 			traceLightRay(r,rayPower,causticsPhotons,true,true);
 		}
 		
@@ -363,7 +375,7 @@ public class PhotonMapper extends Application {
 		
 		causticsMap.build(causticsPhotons.toArray(new Photon[causticsPhotons.size()]), 30, 1);
 		System.out.println("Number of photons in map: " + causticsMap.getNumPhotons());
-		System.out.println(refractiveSphere);
+//		System.out.println(refractiveSphere);
 	}
 	
 	public void traceLightRay(Ray r, Vector rayPower, ArrayList<Photon> mapList, boolean isCaustics) {
@@ -411,11 +423,17 @@ public class PhotonMapper extends Application {
 				case 1: //Diffuse reflection
 					if (isCaustics) break; //Caustics can't be diffusely reflected
 					numDiffuse++;
-					Vector v = new Vector(hitTracable.getDiffuse());
-					Vector newPower = rayPower.multiply(v);
-					
 					dir = calculateDiffuseDir(hitTracable,r,intersection);
 					newR = new Ray(intersection,dir);
+					Vector v = new Vector(hitTracable.getDiffuse());
+					
+					/* With power changed by cos */
+//					float cos = (float) hitTracable.getNormal(intersection).dot(dir); //Pow with cos term
+//					Vector newPower = rayPower.multiply(v).multiply(cos);
+					
+					/* Power not changed by cos */
+					Vector newPower = rayPower.multiply(v);
+					
 					traceLightRay(newR,newPower,mapList,isCaustics);
 					break;
 				case 2: //Specular reflection
@@ -615,32 +633,40 @@ public class PhotonMapper extends Application {
 				
 				if (this.DIRECT_ILLUMINATION_ENABLED) {
 					if (USING_AREA_LIGHT) {
-						direct = this.calculateDirectIlluminationWithAreaLight(intersection,currentTracable); //Using shadow rays
-//						direct = this.calculateRadianceFromPhotonMap(intersection, currentTracable);
-//						direct = this.testFinalGather(intersection, currentTracable);
+						if (USING_SHADOW_PHOTONS) {
+							direct = this.calculateDirectIlluminationWithAreaLightAndShadowPhotons(intersection,currentTracable); //Using shadow photons
+						} else {
+							direct = this.calculateDirectIlluminationWithAreaLight(intersection,currentTracable); //Using shadow rays
+						}
 					} else {
-//						direct = calculateDirectIllumination(intersection,currentTracable); //Using shadow photons
-						direct = calculateDirectIlluminationWithShadowRays(intersection,currentTracable); //Using shadow rays
+						if (USING_SHADOW_PHOTONS) {
+							direct = calculateDirectIllumination(intersection,currentTracable); //Using shadow photons
+						} else {
+							direct = calculateDirectIlluminationWithShadowRays(intersection,currentTracable); //Using shadow rays
+						}
 					}
 				}
 				
 				if (this.CAUSTICS_ENABLED) caustics = calculateCaustics(intersection, currentTracable);
+				
 				if (this.SOFT_INDIRECT_ILLUMINATION_ENABLED) {
-					/* Original importance sampling for point light, doesn't light up ceiling properly */
-//					indirect = this.calculateIndirectIlluminationWithImportanceSampling
-//							(intersection, currentTracable, recursiveDepth).multiply(1)
-//							.multiply(new Vector(currentTracable.getColor()))
-//							.multiply(currentTracable.getDiffusePercent());
+					if (USING_IMPORTANCE_SAMPLING) {
+						/* Original importance sampling for point light, doesn't light up ceiling properly */
+						indirect = this.calculateIndirectIlluminationWithImportanceSampling
+							(intersection, currentTracable, recursiveDepth).multiply(1)
+							.multiply(new Vector(currentTracable.getColor()))
+							.multiply(currentTracable.getDiffusePercent());
 					
-					/* Trying to fix importance sampling */
-//					indirect = this.calculateIndirectIlluminationWithImportanceSamplingV2
+						/* Trying to fix importance sampling */
+//						indirect = this.calculateIndirectIlluminationWithImportanceSamplingV2
 //							(intersection, currentTracable, recursiveDepth).multiply(1);
-					
-					/* Direct visualisation of indirect illumination */
-					indirect = calculateIndirectIlluminationEstimate(intersection, currentTracable).multiply(500f);
-					
-//					indirect = this.calculateIndirectIlluminationAccurate(r, intersection, currentTracable).multiply(10f); // I think standard Monte Carlo
-					
+						
+						/* Monte Carlo? */
+//						indirect = this.calculateIndirectIlluminationAccurate(r, intersection, currentTracable).multiply(10f);
+					} else {
+						/* Direct visualisation of indirect illumination */
+						indirect = calculateIndirectIlluminationEstimate(intersection, currentTracable).multiply(500f);
+					}
 //					System.out.println(indirect);
 				}
 				
@@ -807,6 +833,39 @@ public class PhotonMapper extends Application {
 			return calculateDirectIlluminationAccurate(intersection,currentTracable);
 		}
 		return new Vector(0,0,0);
+	}
+	
+	public Vector calculateDirectIlluminationWithAreaLightAndShadowPhotons(Point intersection, Tracable currentTracable) {
+		Vector direct = new Vector(0,0,0);
+		int numDirectPhotons = 10; //Using only 100 photons
+//		int numDirectPhotons = NUM_PHOTONS_SEARCHING_FOR;
+		//long start1 = System.nanoTime();
+		PhotonMaxHeap directHeap = new PhotonMaxHeap(numDirectPhotons);
+		
+		//Initialise heap with first N photons (shadow or illumination only)
+		int count = 0;
+		Photon p;
+		for (int i=0; i<globalPhotons.size(); i++) {
+			p = globalPhotons.get(i);
+			if (p.isIlluminationPhoton() || p.isShadowPhoton()) {
+				directHeap.insert(p, intersection.euclideanDistance(p.getPosition()));
+				count++;
+			}
+			if (count >= numDirectPhotons) {
+				break;
+			}
+		}
+		
+		//Find nearest N photons (shadow or illumination only)
+		globalMap.getNearestNeighboursDirectIllumination(intersection, currentTracable.getNormal(intersection), directHeap, this.MAX_SEARCH_DISTANCE_DIRECT);
+		int nI = directHeap.getNumIlluminationPhotons();
+		int nS = directHeap.getNumShadowPhotons();
+		
+		if (!(nI < 0 && nS > 0)) {
+			return calculateDirectIlluminationWithAreaLight(intersection, currentTracable);
+		}
+		
+		return direct;
 	}
 	
 	public Vector calculateDirectIlluminationWithAreaLight(Point intersection, Tracable currentTracable) {
@@ -993,14 +1052,20 @@ public class PhotonMapper extends Application {
 		int numPhots = 100;
 		//Initialise heap
 		PhotonMaxHeap heap = new PhotonMaxHeap(numPhots);
-//		for (int i=0; i<numPhots; i++) {
-//			Photon p2 = causticsPhotons.get(i);
-//			heap.insert(p2, intersection.euclideanDistance(p2.getPosition()));
-//		}
+		for (int i=0; i<numPhots; i++) {
+			Photon p2 = causticsPhotons.get(i);
+			heap.insert(p2, intersection.euclideanDistance(p2.getPosition()));
+		}
 		
-		causticsMap.getNearestNeighbours(intersection,heap,MAX_SEARCH_DISTANCE_CAUSTICS);
+		/* Slow search but works */
+//		float k = 1f;
+//		causticsMap.getNearestNeighboursSlow(intersection,heap,MAX_SEARCH_DISTANCE_CAUSTICS);
+//		caustics = heap.getAverageColourConeFilter(k).multiply(new Vector(currentTracable.getColor()));
 		
-		float k = 1;
+		/* Fast search but giving bright spots */
+		float k = 1f;
+		causticsMap.getNearestNeighbours(intersection,heap,MAX_SEARCH_DISTANCE_CAUSTICS); //Gives bright caustics
+//		caustics = heap.getAverageColourConeFilter(k,MAX_SEARCH_DISTANCE_CAUSTICS).multiply(new Vector(currentTracable.getColor()));
 		caustics = heap.getAverageColourConeFilter(k).multiply(new Vector(currentTracable.getColor()));
 		
 		return caustics;
@@ -1072,20 +1137,22 @@ public class PhotonMapper extends Application {
 		return radiance;
 	}
 	
-	public Vector finalGather(Ray r, Point intersection, Tracable currentTracable) {
-		Vector finalGather = new Vector(0,0,0);
+	public float finalGather(Ray r, Point intersection, Tracable currentTracable) {
+		float illumination = 0;
 		int numRays = 10;
-		Vector currentCol = new Vector(currentTracable.getColor());
+		Vector N = currentTracable.getNormal(intersection);
+		Ray newRay;
+		Vector dir;
+		Sphere s = new Sphere(new Point(0,0,0),1f);
 		for (int i=0; i<numRays; i++) {
-//			diffuse = diffuse.add(diffuseReflect(currentTracable,diffuse,intersection,diffusePerc/numRays,recursiveDepth-1));
-			Vector diffuseDir = this.calculateDiffuseDir(currentTracable, r, intersection);
-			Ray diffuseR = new Ray(intersection, diffuseDir);
+			dir = s.generateRandomInHemisphere(N);
+			newRay = new Ray(intersection.add(new Point(dir).multiply(0.00001f)),dir);
 			
 			Tracable hitTracable = tracableObjects.get(0);
 			double t2 = -1;
 			for (Object o: tracableObjects) {
 				Tracable temp = (Tracable) o;
-				double tempT = temp.getIntersect(diffuseR);
+				double tempT = temp.getIntersect(newRay);
 //				if (tempT > t && !Double.isNaN(tempT) && !Double.isInfinite(tempT)) {
 				if ((t2 < 0 && tempT > t2) || (t2 >= 0 && tempT < t2 && tempT >= 0)) {
 					//System.out.println("replacing t:" + t + " with tempT:" + tempT);
@@ -1094,17 +1161,49 @@ public class PhotonMapper extends Application {
 				}
 			}
 			
+			/* Assuming Area Light */
 			if (t2 >= 0 && hitTracable.isDiffuse()) {
-				Point intersection2 = diffuseR.getPoint(t2);
-//				Vector radiance = this.calculateRadianceFromGlobalPhotonMap(intersection2, hitTracable);
-				Vector radiance = this.calculateDirectIlluminationNoColour(intersection2, hitTracable);
-				finalGather = finalGather.add(radiance.multiply(currentCol).divide(numRays));
-//				diffuse = diffuse.add(
-//						(new Vector(currentTracable.getColor()).multiply(radiance)).divide(numRays));
-//				diffuse = diffuse.add(new Vector(hitTracable.getColor()).multiply(diffusePerc).divide(numRays));
+				Point intersection2 = newRay.getPoint(t2);
+				illumination += this.calculateRadianceWithAreaLight(intersection2, currentTracable);
+//						* N.dot(dir); // *cos
 			}
 		}
-		return finalGather;
+		return illumination/numRays;
+	}
+	
+	public Vector finalGatherFromMap(Ray r, Point intersection, Tracable currentTracable) {
+		Vector finalGather = new Vector(0,0,0);
+		int numRays = 10;
+		Vector N = currentTracable.getNormal(intersection);
+		Ray newRay;
+		Vector dir;
+		Sphere s = new Sphere(new Point(0,0,0),1f);
+		for (int i=0; i<numRays; i++) {
+			dir = s.generateRandomInHemisphere(N);
+			newRay = new Ray(intersection.add(new Point(dir).multiply(0.00001f)),dir);
+			
+			Tracable hitTracable = tracableObjects.get(0);
+			double t2 = -1;
+			for (Object o: tracableObjects) {
+				Tracable temp = (Tracable) o;
+				double tempT = temp.getIntersect(newRay);
+//				if (tempT > t && !Double.isNaN(tempT) && !Double.isInfinite(tempT)) {
+				if ((t2 < 0 && tempT > t2) || (t2 >= 0 && tempT < t2 && tempT >= 0)) {
+					//System.out.println("replacing t:" + t + " with tempT:" + tempT);
+					t2 = tempT;
+					hitTracable = temp;
+				}
+			}
+			
+			/* Assuming Area Light */
+			if (t2 >= 0 && hitTracable.isDiffuse()) {
+				Point intersection2 = newRay.getPoint(t2);
+				finalGather = finalGather.add(this.calculateRadianceFromPhotonMap(intersection2, hitTracable))
+						.multiply(N.dot(dir));
+//						* N.dot(dir); // *cos
+			}
+		}
+		return finalGather.divide(numRays);
 	}
 	
 	public Vector calculateIndirectIlluminationAccurate(Ray r, Point intersection, Tracable currentTracable) {

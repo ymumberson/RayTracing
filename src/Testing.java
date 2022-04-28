@@ -25,8 +25,36 @@ public class Testing {
 //		SphericalCoordinateSystemTesting();
 //		testingT();
 //		testingUVXYS();
-		ImportanceSamplingUsingThePhotonMap();
+//		ImportanceSamplingUsingThePhotonMap();
 //		MagnitudeTesting();
+//		testingRandomHemisphere();
+		testingTimings();
+	}
+	
+	public static void testingTimings() {
+		/* Does this mean a better than logarithmic runtime? */
+		float numTrianglesBunny = 203851; // 4.32
+		float numTrianglesDragon = 1285325; // 13.64
+		float timeBunny = 846;
+		float timeDragon = 2020;
+		float bunnyLog = (float)Math.log(numTrianglesBunny);
+		float dragonLog = (float)Math.log(numTrianglesDragon);
+		System.out.println("Bunny log: " + bunnyLog);
+		System.out.println("Dragon log: " + dragonLog);
+		System.out.println((timeDragon/timeBunny));
+	}
+	
+	public static void testingRandomHemisphere() {
+		Sphere s = new Sphere(new Point(0,0,0),1f);
+		float numSamples = 10000f;
+		Vector avg = new Vector(0,0,0);
+		Vector N = new Vector(0,1,0);
+		for (int i=0; i<numSamples; i++) {
+			avg = avg.add(s.generateRandomInHemisphere(N));
+		}
+		avg = avg.divide(numSamples);
+		avg.normalise();
+		System.out.println(avg);
 	}
 	
 	public static void ImportanceSamplingUsingThePhotonMap() {

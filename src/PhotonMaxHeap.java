@@ -157,6 +157,17 @@ public class PhotonMaxHeap {
 		return col.divide(Math.PI * maxDist * maxDist * (1-2/(3*k)));
 	}
 	
+	public Vector getAverageColourConeFilter(float k, float maxDist2) {
+		if (size <= 0) return new Vector(0,0,0);
+		double weight;
+		Vector col = new Vector(0,0,0);
+		for (int i=0; i<size; i++) {
+			weight = 1-(distances[i]/(k*Math.sqrt(maxDist2)));
+			col = col.add(photons[i].getEnergy().multiply(weight));
+		}
+		return col.divide(Math.PI * maxDist2 * (1-2/(3*k)));
+	}
+	
 	//Could return a smaller list than maxsize
 	public Photon[] getPhotons() {
 		return photons;

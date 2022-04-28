@@ -25,8 +25,14 @@ import java.io.FileNotFoundException;
 
 public class Main extends Application {
 //	private int x_axis = 640; private int y_axis = 480; private int z_axis = 400; //For Bunny
+//	private int x_axis = (64*2)/3; private int y_axis = (48*2)/3; private int z_axis = 400; //For Bunny
+	
+	
 //	private int x_axis = 1920; private int y_axis = 1080; private int z_axis = 2000;
 	private int x_axis = 750; private int y_axis = 800; private int z_axis = 750; //For actual scene
+	
+	int imgX = x_axis; int imgY = y_axis; boolean USING_CUSTOM_RESOLUTION = false;
+//	int imgX = 1280; int imgY = 720; boolean USING_CUSTOM_RESOLUTION = true;
 	
 	
 	private ArrayList<Tracable> tracableObjects = new ArrayList<Tracable>();
@@ -34,13 +40,15 @@ public class Main extends Application {
     private Point camera;
     private AABB bb; //Bounding box surrounding the scene used as background (well it will be anyway)
     private int MAX_RECURSIVE_DEPTH = 4;
-    private int SAMPLES_PER_PIXEL = 1;
+    private int SAMPLES_PER_PIXEL = 3;
     private KdTree tree;
     private long startTime;
     private long lastDuration = 0;
     private long totalTime;
-    private boolean USING_KD_TREES = false;
-    private boolean sceneContainsAreaLight = false;
+    private boolean USING_KD_TREES = true;
+    
+    private boolean RENDERING_BUNNY = false;
+    private boolean RENDERING_DRAGON = false;
 	
 //    Vector lookfrom = new Vector(0,0,0);
 //    Vector lookat = new Vector (0,0,0);
@@ -54,7 +62,14 @@ public class Main extends Application {
 	
 	@Override
 	public void start(Stage primaryStage) throws Exception {
-		WritableImage img = new WritableImage(x_axis, y_axis);
+		if (RENDERING_BUNNY || RENDERING_DRAGON) {
+			x_axis = 640; y_axis = 480; z_axis = 400; //For Bunny
+			if (!USING_CUSTOM_RESOLUTION) {
+				imgX = x_axis; imgY = y_axis;
+			}
+		}
+		
+		WritableImage img = new WritableImage(imgX, imgY);
 		ImageView imgView = new ImageView(img);
 		
 		Point min = new Point(-1,-1,-1);
@@ -119,11 +134,19 @@ public class Main extends Application {
         
         
 //        traceSampleScene(img,10);
-//        traceBunny(img, 10);
-        traceActualScene(img,y_axis/2);
+        
+        if (RENDERING_BUNNY || RENDERING_DRAGON) {
+        	traceBunny(img, 10);
+        } else {
+        	traceActualScene(img,y_axis/2);
+        }
+        
+        
+        
+//        
 //        tracePresentationStuff(img);
         
-        Scene scene = new Scene(root, x_axis, y_axis+20);
+        Scene scene = new Scene(root, imgX, imgY+20);
         primaryStage.setScene(scene);
         primaryStage.show();
 	}
@@ -256,8 +279,15 @@ public class Main extends Application {
 	}
 	
 	public void initialiseBunnyTracables() {
-		//File f = new File("BunnyTest.ply");
-		File f = new File("dragon_vrip.ply"); // @ 871414 triangles
+		
+		File f;
+		if (RENDERING_BUNNY) {
+			f = new File("bun_zipper.ply"); //Very high res @ 69451 triangles
+		} else {
+			f = new File("dragon_vrip.ply"); // @ 871414 triangles
+		}
+		
+//		File f = new File("dragon_vrip.ply"); // @ 871414 triangles
 //		File f = new File("bun_zipper.ply"); //Very high res @ 69451 triangles
 //		File f = new File("bun_zipper_res2.ply"); //High res @ 16301 triangles
 //		File f = new File("bun_zipper_res3.ply"); //Medium res @ 3851 triangles
@@ -276,7 +306,11 @@ public class Main extends Application {
 			
 			//Skip 6 lines
 //			int numLinesSkip2 = 5; //For bunny
-			int numLinesSkip2 = 3; //For dragon
+//			int numLinesSkip2 = 3; //For dragon
+			int numLinesSkip2 = 3;
+			if (RENDERING_BUNNY) {
+				numLinesSkip2 = 5;
+			}
 			for (int i=0; i<numLinesSkip2; i++) {
 				in.nextLine();
 			}
@@ -299,6 +333,9 @@ public class Main extends Application {
 //					Float.parseFloat(str[1])*scalar,
 //					Float.parseFloat(str[2])*scalar + z_axis/2);
 				
+				if (RENDERING_BUNNY) {
+					colourList[i] = Double.valueOf(str[3]);
+				}
 //				colourList[i] = Double.valueOf(str[3]); //Only for bunny
 				
 				Point p = new Point(
@@ -313,9 +350,15 @@ public class Main extends Application {
 //				double py = p.y() * -1 + 400;
 //				double pz = p.z() * 1 + 200;
 				
+				// Original offset
 				double px = p.z()*1 + 300;
 				double py = p.y() * -1 + 400;
 				double pz = p.x() * -1 + 200;
+				
+				/* Messing around with camera */
+//				double px = p.z()*1 + 10;
+//				double py = p.y() * -1 + 20;
+//				double pz = p.x() * -1 + 20;
 				
 				Point p2 = new Point(px,py,pz);
 				//System.out.println(p + " -> " + p2);
@@ -349,68 +392,6 @@ public class Main extends Application {
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 		}
-		
-//		double floorHeight = y_axis;
-//		Rectangle floor = new Rectangle(new Point(0,floorHeight,z_axis), 
-//				new Point(x_axis,floorHeight,z_axis),
-//				new Point(x_axis,floorHeight,0),
-//				new Point(0,floorHeight,0));
-//        floor.setColor(Color.WHITE);
-//        floor.setSpecular(Color.color(0, 0, 0));
-//        floor.setReflectedPercent(0.5);
-//        
-//        Rectangle wall1 = new Rectangle(
-//        		new Point(0,0,0),
-//        		new Point(0,0,z_axis),
-//        		new Point(0,y_axis,z_axis),
-//        		new Point(0,y_axis,0));
-//        wall1.setColor(Color.color(0.5, 0, 0));
-//        wall1.setSpecular(Color.color(0, 0, 0));
-//        wall1.setReflectedPercent(0.5);
-//        
-//        Rectangle wall2 = new Rectangle(
-//        		new Point(0,0,z_axis),
-//        		new Point(x_axis,0,z_axis),
-//        		new Point(x_axis,y_axis,z_axis),
-//        		new Point(0,y_axis,z_axis));
-//        wall2.setColor(Color.color(0.5, 0.2, 0));
-//        wall2.setSpecular(Color.color(0, 0, 0));
-//        wall2.setReflectedPercent(0.5);
-//        
-//        Rectangle wall3 = new Rectangle(
-//        		new Point(x_axis,0,z_axis),
-//        		new Point(x_axis,0,0),
-//        		new Point(x_axis,y_axis,0),
-//        		new Point(x_axis,y_axis,z_axis));
-//        wall3.setColor(Color.color(0, 0.5, 0));
-//        wall3.setSpecular(Color.color(0, 0, 0));
-//        wall3.setReflectedPercent(0.5);
-//        
-//        Rectangle wall4 = new Rectangle(
-//        		new Point(x_axis,0,-2),
-//        		new Point(0,0,-2),
-//        		new Point(0,y_axis,-2),
-//        		new Point(x_axis,y_axis,-2));
-//        wall4.setColor(Color.color(0, 0, 0.5));
-//        wall4.setSpecular(Color.color(0, 0, 0));
-//        wall4.setReflectedPercent(0.5);
-//        
-//        Rectangle ceiling = new Rectangle(
-//        		new Point(0,0,0),
-//        		new Point(x_axis,0,0),
-//        		new Point(x_axis,0,z_axis),
-//        		new Point(0,0,z_axis));
-////        ceiling.setColor(Color.color(0.5, 0, 0));
-//        ceiling.setColor(Color.WHITE);
-//        ceiling.setSpecular(Color.color(0, 0, 0));
-//        ceiling.setReflectedPercent(0.5);
-//        
-//        tracableObjects.add(floor);
-//        tracableObjects.add(ceiling);
-//        tracableObjects.add(wall1);
-//        tracableObjects.add(wall2);
-//        tracableObjects.add(wall3);
-////        tracableObjects.add(wall4);
 	}
 	
 	public void traceSampleScene(WritableImage img, int recursiveCutoff) {
@@ -659,17 +640,7 @@ public class Main extends Application {
         ceiling.setColor(Color.color(0.7,0.7,0.7));
         ceiling.setSpecular(Color.color(0, 0, 0));
         ceiling.setDiffusePercent(0.5f);
-        
-//        float width = 200f;
-//        Point middle = new Point(x_axis/2f,1,z_axis/2f);
-//        AreaLight lightSource = new AreaLight(
-//        		middle.add(new Point(-width/2,0,-width/2)),
-//        		middle.add(new Point(width/2,0,-width/2)),
-//        		middle.add(new Point(width/2,0,width/2)),
-//        		middle.add(new Point(-width/2,0,width/2)));
-//        lightSource.setColor(Color.WHITE);
-//        tracableObjects.add(lightSource);
-//        sceneContainsAreaLight = true;
+
         
         tracableObjects.add(floor);
         tracableObjects.add(wall1);
@@ -779,20 +750,22 @@ public class Main extends Application {
             		
         		} else { //Just 1 ray so no super sampling
         			// Creating the ray //
-            		Vector rayVec = new Vector(i-camera.x(), j-camera.y(), -camera.z());
+//            		Vector rayVec = new Vector(i-camera.x(), j-camera.y(), -camera.z());
+//            		rayVec.normalise();
+//            		Ray r = new Ray(new Point(i,j,-1), rayVec); //Persepective projection
+//            		//Ray r = new Ray(new Point(i,j,0), new Vector(0,0,1)); //Authnographic projection
+        			
+        			double x = ((double)i/w)*x_axis;
+        			double y = ((double)j/h)*y_axis;
+//        			System.out.println(i + " " + j + " -> " + x + " " + y);
+        			Vector rayVec = new Vector(x-camera.x(), y-camera.y(), -camera.z());
             		rayVec.normalise();
-            		Ray r = new Ray(new Point(i,j,-1), rayVec); //Persepective projection
-            		//Ray r = new Ray(new Point(i,j,0), new Vector(0,0,1)); //Authnographic projection
-            		//System.out.println("\nShould be: " + r);
+//            		Ray r = new Ray(new Point(i,j,-1), rayVec); //Persepective projection
+            		Ray r = new Ray(new Point(x,y,-1),rayVec);
             		
             		image_writer.setColor(i, j, trace(r,MAX_RECURSIVE_DEPTH));
-//            		image_writer.setColor(i, j, traceTree(r,MAX_RECURSIVE_DEPTH));
-//            		image_writer.setColor(i, j, traceTest(r));
-            		
-//            		image_writer.setColor(i, h-1-j, trace(r,MAX_RECURSIVE_DEPTH)); //Flipped in y-axis
         		}
         	}
-//        	System.out.println("Row " + (j+1) + "/" + h + " completed!");
         }
 	}
 	
@@ -995,12 +968,12 @@ public class Main extends Application {
 				
 			//Messing with colour bleeding via diffuse reflections	
 			} else { 
-//				int numRays = 100;
-//				float diffusePerc = 0.35f;
-//				currentColor = currentColor.multiply(1-diffusePerc);
-//				for (int i=0; i<numRays; i++) {
-//					currentColor = currentColor.add(diffuseReflect(currentTracable,currentColor,intersection,diffusePerc/numRays,recursiveDepth-1));
-//				}
+				int numRays = 100;
+				float diffusePerc = 0.35f;
+				currentColor = currentColor.multiply(1-diffusePerc);
+				for (int i=0; i<numRays; i++) {
+					currentColor = currentColor.add(diffuseReflect(currentTracable,currentColor,intersection,diffusePerc/numRays,recursiveDepth-1));
+				}
 			}
 			
 			currentColor = currentColor.add(currentTracable.getEmissiveValue());
