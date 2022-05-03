@@ -2,13 +2,11 @@
 public class UnitSquare {
 	private Vector[] array;
 	private Vector[] cumulativeFrequencies;
-	private int[][] grid;
 	private int n;
 	private float totalEnergy;
 	
 	public UnitSquare(int n) {
 		this.n = n;
-		grid = new int[n][n];
 		array = new Vector[n*n];
 		for (int j=0; j<n; j++) {
 			for (int i=0; i<n; i++) {
@@ -121,7 +119,7 @@ public class UnitSquare {
 			if (probability < cumulativeFrequencies[i].dz()) {
 //				System.out.println(array[i]);
 				Vector uv = cumulativeFrequencies[i];
-				float scalingFactor = getScalingFactor(uv);
+//				float scalingFactor = getScalingFactor(uv);
 //				float scalingFactor = getScalingFactor(array[i]);
 				Vector xyz = XYZ(uv.dx()/n,uv.dy()/n);
 //				Vector xyz = XYZ(uv.dx(),uv.dy());

@@ -24,6 +24,19 @@ import java.io.File;
 import java.io.FileNotFoundException;
 
 public class Main extends Application {
+	/* Program Settings */
+	public Render sceneRender = Render.Standard;
+    private boolean USING_KD_TREES = false;
+    private int NUM_DIFFUSE_RAYS = 10;
+    private int MAX_RECURSIVE_DEPTH = 4;
+    private int SAMPLES_PER_PIXEL = 1;
+	public enum Render {
+		Bunny,
+		Dragon,
+		Standard,
+		StandardDiffuse,
+	}
+	
 //	private int x_axis = 640; private int y_axis = 480; private int z_axis = 400; //For Bunny
 //	private int x_axis = (64*2)/3; private int y_axis = (48*2)/3; private int z_axis = 400; //For Bunny
 	
@@ -39,16 +52,13 @@ public class Main extends Application {
 	private Point light;
     private Point camera;
     private AABB bb; //Bounding box surrounding the scene used as background (well it will be anyway)
-    private int MAX_RECURSIVE_DEPTH = 4;
-    private int SAMPLES_PER_PIXEL = 3;
     private KdTree tree;
     private long startTime;
     private long lastDuration = 0;
     private long totalTime;
-    private boolean USING_KD_TREES = true;
     
-    private boolean RENDERING_BUNNY = false;
-    private boolean RENDERING_DRAGON = false;
+//    private boolean RENDERING_BUNNY = false;
+//    private boolean RENDERING_DRAGON = false;
 	
 //    Vector lookfrom = new Vector(0,0,0);
 //    Vector lookat = new Vector (0,0,0);
@@ -62,7 +72,8 @@ public class Main extends Application {
 	
 	@Override
 	public void start(Stage primaryStage) throws Exception {
-		if (RENDERING_BUNNY || RENDERING_DRAGON) {
+//		if (RENDERING_BUNNY || RENDERING_DRAGON) {
+		if (sceneRender == Render.Bunny || sceneRender == Render.Dragon) {
 			x_axis = 640; y_axis = 480; z_axis = 400; //For Bunny
 			if (!USING_CUSTOM_RESOLUTION) {
 				imgX = x_axis; imgY = y_axis;
@@ -135,7 +146,8 @@ public class Main extends Application {
         
 //        traceSampleScene(img,10);
         
-        if (RENDERING_BUNNY || RENDERING_DRAGON) {
+//        if (RENDERING_BUNNY || RENDERING_DRAGON) {
+        if (sceneRender == Render.Bunny || sceneRender == Render.Dragon) {
         	traceBunny(img, 10);
         } else {
         	traceActualScene(img,y_axis/2);
@@ -281,7 +293,8 @@ public class Main extends Application {
 	public void initialiseBunnyTracables() {
 		
 		File f;
-		if (RENDERING_BUNNY) {
+//		if (RENDERING_BUNNY) {
+		if (sceneRender == Render.Bunny) {
 			f = new File("bun_zipper.ply"); //Very high res @ 69451 triangles
 		} else {
 			f = new File("dragon_vrip.ply"); // @ 871414 triangles
@@ -308,7 +321,8 @@ public class Main extends Application {
 //			int numLinesSkip2 = 5; //For bunny
 //			int numLinesSkip2 = 3; //For dragon
 			int numLinesSkip2 = 3;
-			if (RENDERING_BUNNY) {
+//			if (RENDERING_BUNNY) {
+			if (sceneRender == Render.Bunny) {
 				numLinesSkip2 = 5;
 			}
 			for (int i=0; i<numLinesSkip2; i++) {
@@ -333,7 +347,8 @@ public class Main extends Application {
 //					Float.parseFloat(str[1])*scalar,
 //					Float.parseFloat(str[2])*scalar + z_axis/2);
 				
-				if (RENDERING_BUNNY) {
+//				if (RENDERING_BUNNY) {
+				if (sceneRender == Render.Bunny) {
 					colourList[i] = Double.valueOf(str[3]);
 				}
 //				colourList[i] = Double.valueOf(str[3]); //Only for bunny
@@ -967,12 +982,14 @@ public class Main extends Application {
 //				System.out.println("Kr: " + kr + " | Kt: " + (1-kr));
 				
 			//Messing with colour bleeding via diffuse reflections	
-			} else { 
-				int numRays = 100;
+			} else {
+				if (sceneRender == Render.StandardDiffuse) {
+				int numRays = this.NUM_DIFFUSE_RAYS;
 				float diffusePerc = 0.35f;
 				currentColor = currentColor.multiply(1-diffusePerc);
 				for (int i=0; i<numRays; i++) {
 					currentColor = currentColor.add(diffuseReflect(currentTracable,currentColor,intersection,diffusePerc/numRays,recursiveDepth-1));
+				}
 				}
 			}
 			

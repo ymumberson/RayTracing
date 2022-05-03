@@ -653,13 +653,9 @@ public class PhotonMapper extends Application {
 					if (USING_IMPORTANCE_SAMPLING) {
 						/* Original importance sampling for point light, doesn't light up ceiling properly */
 						indirect = this.calculateIndirectIlluminationWithImportanceSampling
-							(intersection, currentTracable, recursiveDepth).multiply(1)
+							(intersection, currentTracable, recursiveDepth)
 							.multiply(new Vector(currentTracable.getColor()))
 							.multiply(currentTracable.getDiffusePercent());
-					
-						/* Trying to fix importance sampling */
-//						indirect = this.calculateIndirectIlluminationWithImportanceSamplingV2
-//							(intersection, currentTracable, recursiveDepth).multiply(1);
 						
 						/* Monte Carlo? */
 //						indirect = this.calculateIndirectIlluminationAccurate(r, intersection, currentTracable).multiply(10f);
@@ -1294,7 +1290,9 @@ public class PhotonMapper extends Application {
 //		this.globalMap.getNearestNeighbours(intersection, heap, this.MAX_SEARCH_DISTANCE_INDIRECT); //Without surface normal
 		this.globalMap.getNearestNeighbours(intersection, currentTracable.getNormal(intersection), heap, this.MAX_SEARCH_DISTANCE_INDIRECT); //With surface normal
 //		this.globalMap.getNearestNeighbours(intersection, currentTracable.getNormal(intersection), heap, 10*10); //With surface normal
-		UnitSquare unitSquare = new UnitSquare(50);
+		
+		UnitSquare unitSquare = new UnitSquare(30);
+//		UnitSquare2 unitSquare = new UnitSquare2(30);
 		Photon[] photons = heap.getPhotons();
 		for (int i=0; i<heap.getSize(); i++) {
 			unitSquare.insertVector(photons[i].getIncidentDirection().multiply(-1)); //Inverted incident direction
@@ -1303,6 +1301,8 @@ public class PhotonMapper extends Application {
 		}
 //		unitSquare.sort();
 		unitSquare.createCumulativeFrequencies();
+		
+		
 		int numRays = 100;
 		for (int i=0; i<numRays; i++) {
 			double randomValue = Math.random();
@@ -1322,7 +1322,7 @@ public class PhotonMapper extends Application {
 				}
 			}
 			if (t2 >= 0 && hitTracable.isDiffuse()) {
-				Point intersection2 = diffuseR.getPoint(t2);
+//				Point intersection2 = diffuseR.getPoint(t2);
 				diffuse = diffuse.add(
 						new Vector(hitTracable.getColor()).divide(numRays).multiply(scalingFactor));
 //						.multiply(this.calculateDirectIlluminationWithAreaLight(intersection2, hitTracable)));
@@ -1332,84 +1332,6 @@ public class PhotonMapper extends Application {
 		}
 		
 		return diffuse;
-	}
-	
-	public Vector calculateIndirectIlluminationWithImportanceSamplingV2(Point intersection, Tracable currentTracable, int recursiveDepth) {
-		Vector diffuse = new Vector(0,0,0);
-		
-		//Initialise heap
-		PhotonMaxHeap heap = new PhotonMaxHeap(this.NUM_PHOTONS_SEARCHING_FOR);
-		
-		int count=0;
-		Vector norm = currentTracable.getNormal(intersection);
-//		for (int i=0; i<NUM_PHOTONS_SEARCHING_FOR; i++) {
-		for (int i=0; i<this.globalPhotons.size(); i++) {
-			Photon p2 = globalPhotons.get(i);
-			if (!(p2.isIlluminationPhoton() || p2.isShadowPhoton()) && (p2.getSurfaceNormal() == norm)) {
-				heap.insert(p2, intersection.euclideanDistance(p2.getPosition()));
-				count++;
-			}
-			if (count >= NUM_PHOTONS_SEARCHING_FOR) break;
-		}
-		
-//		this.globalMap.getNearestNeighbours(intersection, heap, this.MAX_SEARCH_DISTANCE_INDIRECT); //Without surface normal
-		this.globalMap.getNearestNeighbours(intersection, currentTracable.getNormal(intersection), heap, this.MAX_SEARCH_DISTANCE_INDIRECT); //With surface normal
-//		this.globalMap.getNearestNeighbours(intersection, currentTracable.getNormal(intersection), heap, 10*10); //With surface normal
-		UnitSquare unitSquare = new UnitSquare(30);
-		Photon[] photons = heap.getPhotons();
-		for (int i=0; i<heap.getSize(); i++) {
-			unitSquare.insertVector(photons[i].getIncidentDirection().multiply(-1)); //Inverted incident direction
-			
-//			unitSquare.insertVector(photons[i].getIncidentDirection()); //normal incident direction
-		}
-//		unitSquare.sort();
-		unitSquare.createCumulativeFrequencies();
-//		unitSquare.print();
-		int numRays = 100;
-		Sphere s = new Sphere(new Point(0,0,0), 1f);
-		for (int i=0; i<numRays; i++) {
-			
-			/* Generating random rays with importance sampling (Just for testing) */
-			double randomValue = Math.random();
-			Vector diffuseDir = unitSquare.getDirection(randomValue);
-			float scalingFactor = (float) diffuseDir.magnitude();
-			diffuseDir.normalise();
-			
-			/* Generating random rays with Monte Carlo */
-//			Vector diffuseDir = s.generateRandomUnitVector();
-//			if (diffuseDir.dot(currentTracable.getNormal(intersection)) < 0) {
-//				diffuseDir = diffuseDir.multiply(-1);
-//			}
-			
-			Ray diffuseR = new Ray(intersection.add(new Point(diffuseDir).multiply(0.00001f)), diffuseDir);
-			Tracable hitTracable = tracableObjects.get(0);
-			double t2 = -1;
-			for (Object o: tracableObjects) {
-				Tracable temp = (Tracable) o;
-				double tempT = temp.getIntersect(diffuseR);
-				if ((t2 < 0 && tempT > t2) || (t2 >= 0 && tempT < t2 && tempT >= 0)) {
-					t2 = tempT;
-					hitTracable = temp;
-				}
-			}
-			double diffuseCoeff = Math.abs(norm.dot(diffuseDir));
-			double f = currentTracable.getDiffusePercent();
-			if (t2 >= 0 && hitTracable.isDiffuse()) {
-				Point intersection2 = diffuseR.getPoint(t2);
-//				
-//				diffuse = diffuse.add(this.calculateRadianceFromPhotonMap(intersection2, hitTracable)).divide(scalingFactor).multiply(diffuseCoeff);
-//						.multiply(diffuseCoeff*scalingFactor);
-				
-				diffuse = diffuse.add(new Vector(hitTracable.getColor())
-						.multiply(this.calculateRadianceWithAreaLight(intersection2, hitTracable)))
-						.multiply(diffuseCoeff*scalingFactor);
-			}
-		}
-		
-		diffuse = diffuse.multiply(new Vector(currentTracable.getColor())).multiply(currentTracable.getDiffusePercent());
-//		System.out.println(diffuse);
-		return diffuse;
-//		return diffuse.multiply(new Vector(currentTracable.getColor())).multiply(currentTracable.getDiffusePercent());
 	}
 	
 	/*
