@@ -1,7 +1,7 @@
 # Photon Mapping
 Implemented Photon Mapping from scratch in Java. My aim with this project was to push my problem solving skills by implementing a complex algorithm, so the code was quite experimental.
 
-For a clean and polished project in ray tracing, look at my [Ray Tracing in C++](https://github.com/ymumberson/Ray-Tracing-C--) repository. The C++ project implements path tracing instead of photon mapping but aims more towards clean and efficient code.
+<b>For a clean and polished project</b> in ray tracing, look at my [Ray Tracing in C++](https://github.com/ymumberson/Ray-Tracing-C--) repository. The C++ project implements path tracing instead of photon mapping but aims more towards clean and efficient code.
 
 ## The Scene
 The scene is a simple Cornell Box containing two glass spheres and an area light. The larger glass sphere is relfective while the smaller glass sphere is refractive. Because the ceiling light is an area light, the ceiling will not be directly lit by the light (Only lit by reflected rays) and the shadows from the spheres should be soft instead of hard.
